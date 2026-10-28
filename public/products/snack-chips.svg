@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="chipsBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F1C40F"/>
+      <stop offset="60%" stop-color="#E67E22"/>
+      <stop offset="100%" stop-color="#D35400"/>
+    </linearGradient>
+  </defs>
+  <!-- Bag shape with crinkled top and bottom -->
+  <path d="M40 70 L160 70 L150 330 L50 330 Z" fill="url(#chipsBg)" rx="16"/>
+  <!-- Bag seal lines -->
+  <line x1="42" y1="78" x2="158" y2="78" stroke="#F39C12" stroke-width="4" stroke-dasharray="4,2"/>
+  <line x1="52" y1="322" x2="148" y2="322" stroke="#B9770E" stroke-width="4" stroke-dasharray="4,2"/>
+  <!-- Shiny highlight -->
+  <path d="M55 90 Q75 180 65 310" stroke="white" stroke-width="8" opacity="0.25" stroke-linecap="round"/>
+  <!-- Chip shape icon in center -->
+  <ellipse cx="100" cy="180" rx="28" ry="18" fill="#F9E79F" transform="rotate(-15 100 180)"/>
+  <text x="100" y="240" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="16" letter-spacing="1">CHIPS</text>
+  <text x="100" y="260" text-anchor="middle" fill="#78281F" font-family="'Inter', sans-serif" font-weight="700" font-size="11">NATURE / SEL</text>
+  <text x="100" y="280" text-anchor="middle" fill="#FFFFFF" opacity="0.8" font-family="'Inter', sans-serif" font-weight="600" font-size="10">135G</text>
+</svg>

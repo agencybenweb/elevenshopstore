@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="puffBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF007F"/>
+      <stop offset="50%" stop-color="#7928CA"/>
+      <stop offset="100%" stop-color="#00DFD8"/>
+    </linearGradient>
+    <linearGradient id="tipGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1A1A1A"/>
+      <stop offset="100%" stop-color="#333333"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Mouthpiece -->
+  <path d="M85 75 Q85 60 100 60 Q115 60 115 75 L112 110 L88 110 Z" fill="url(#tipGrad)"/>
+
+  <!-- Metal Ring -->
+  <rect x="86" y="110" width="28" height="6" rx="2" fill="#E0E0E0"/>
+
+  <!-- Vape Pen Body -->
+  <rect x="84" y="116" width="32" height="180" rx="10" fill="url(#puffBody)"/>
+
+  <!-- LED Base Ring -->
+  <rect x="88" y="296" width="24" height="8" rx="3" fill="#00DFD8"/>
+
+  <!-- Text / Decal on Vape -->
+  <g transform="rotate(-90 100 205)">
+    <text x="100" y="209" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', -apple-system, sans-serif" font-weight="900" font-size="10" letter-spacing="3">PUFF 8000</text>
+  </g>
+
+  <!-- 18+ Badge -->
+  <circle cx="100" cy="335" r="14" fill="#E74C3C" stroke="#FFFFFF" stroke-width="1.5"/>
+  <text x="100" y="340" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', -apple-system, sans-serif" font-weight="900" font-size="11">18+</text>
+</svg>

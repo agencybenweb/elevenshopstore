@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="cableGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#424242"/>
+      <stop offset="100%" stop-color="#212121"/>
+    </linearGradient>
+  </defs>
+  <!-- Coiled cable loop -->
+  <ellipse cx="100" cy="180" rx="45" ry="45" fill="none" stroke="#616161" stroke-width="10"/>
+  <ellipse cx="100" cy="180" rx="35" ry="35" fill="none" stroke="#757575" stroke-width="8"/>
+  <!-- Connector 1 -->
+  <rect x="50" y="140" width="18" height="35" rx="5" fill="#EEEEEE"/>
+  <rect x="54" y="125" width="10" height="15" rx="2" fill="#BDBDBD"/>
+  <!-- Connector 2 -->
+  <rect x="132" y="180" width="18" height="35" rx="5" fill="#EEEEEE"/>
+  <rect x="136" y="215" width="10" height="15" rx="2" fill="#BDBDBD"/>
+  <!-- Cable tie with Eleven Shop Pink -->
+  <rect x="88" y="165" width="24" height="30" rx="4" fill="#FF2A85"/>
+  <text x="100" y="275" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="14" letter-spacing="1">CÂBLE 1M</text>
+  <text x="100" y="295" text-anchor="middle" fill="#FF2A85" font-family="'Inter', sans-serif" font-weight="700" font-size="11">USB-C / LIGHTNING</text>
+</svg>

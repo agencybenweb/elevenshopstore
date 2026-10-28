@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ECEFF1"/>
+      <stop offset="100%" stop-color="#B0BEC5"/>
+    </linearGradient>
+  </defs>
+  <rect x="56" y="30" width="88" height="16" rx="8" fill="url(#metal)"/>
+  <!-- Silver and Blue quarters -->
+  <clipPath id="canShape">
+    <rect x="46" y="42" width="108" height="324" rx="22"/>
+  </clipPath>
+  <g clip-path="url(#canShape)">
+    <rect x="46" y="42" width="108" height="324" fill="#0984E3"/>
+    <path d="M46 42 L154 366 L154 42 Z" fill="#DFE6E9"/>
+    <!-- Yellow circle & Red bulls -->
+    <circle cx="100" cy="180" r="28" fill="#FEE140"/>
+    <polygon points="85,175 70,185 85,190" fill="#D63031"/>
+    <polygon points="115,175 130,185 115,190" fill="#D63031"/>
+  </g>
+  <rect x="56" y="356" width="88" height="12" rx="6" fill="url(#metal)"/>
+  <text x="100" y="245" text-anchor="middle" fill="#D63031" font-family="'Inter', sans-serif" font-weight="900" font-size="16">RED BULL</text>
+  <text x="100" y="265" text-anchor="middle" fill="#2D3436" font-family="'Inter', sans-serif" font-weight="700" font-size="10">250 ML</text>
+</svg>

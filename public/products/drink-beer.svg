@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="bottleGlass" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1B4D3E"/>
+      <stop offset="40%" stop-color="#2E8B57"/>
+      <stop offset="70%" stop-color="#3CB371"/>
+      <stop offset="100%" stop-color="#0E3326"/>
+    </linearGradient>
+    <linearGradient id="goldCap" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F9E79F"/>
+      <stop offset="100%" stop-color="#B7950B"/>
+    </linearGradient>
+  </defs>
+  <!-- Bottle Cap -->
+  <rect x="88" y="35" width="24" height="15" rx="3" fill="url(#goldCap)"/>
+  <!-- Bottle Neck -->
+  <path d="M92 48 L92 90 L80 130 L65 155 L65 340 Q100 355 135 340 L135 155 L120 130 L108 90 L108 48 Z" fill="url(#bottleGlass)"/>
+  <!-- Label -->
+  <rect x="67" y="190" width="66" height="85" rx="6" fill="#FDFEFE"/>
+  <rect x="70" y="193" width="60" height="79" rx="4" fill="#0B5345"/>
+  <circle cx="100" cy="225" r="14" fill="#E74C3C"/>
+  <text x="100" y="230" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="14">★</text>
+  <text x="100" y="255" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="800" font-size="10">PREMIUM</text>
+  <text x="100" y="267" text-anchor="middle" fill="#F1C40F" font-family="'Inter', sans-serif" font-weight="700" font-size="8">BIÈRE 33CL • 5%</text>
+  <!-- 18+ tag -->
+  <circle cx="100" cy="305" r="10" fill="#E74C3C"/>
+  <text x="100" y="309" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="8">18+</text>
+</svg>

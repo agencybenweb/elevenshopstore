@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="canCitrus" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00A859"/>
+      <stop offset="50%" stop-color="#2ECC71"/>
+      <stop offset="100%" stop-color="#F1C40F"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ECEFF1"/>
+      <stop offset="100%" stop-color="#90A4AE"/>
+    </linearGradient>
+  </defs>
+  <rect x="52" y="30" width="96" height="18" rx="8" fill="url(#metal)"/>
+  <rect x="42" y="44" width="116" height="320" rx="26" fill="url(#canCitrus)"/>
+  <rect x="52" y="356" width="96" height="14" rx="6" fill="url(#metal)"/>
+  <!-- Lemon sparkle -->
+  <circle cx="100" cy="180" r="32" fill="#FFEAA7" opacity="0.9"/>
+  <circle cx="100" cy="180" r="26" fill="#FDCB6E"/>
+  <text x="100" y="248" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="16" letter-spacing="2">CITRUS</text>
+  <text x="100" y="270" text-anchor="middle" fill="#FFFFFF" opacity="0.9" font-family="'Inter', sans-serif" font-weight="600" font-size="11">LIME &amp; LEMON</text>
+</svg>

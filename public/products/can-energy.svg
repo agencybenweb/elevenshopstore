@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="canEnergy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141414"/>
+      <stop offset="50%" stop-color="#00E676"/>
+      <stop offset="100%" stop-color="#0B6623"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E0E0E0"/>
+      <stop offset="100%" stop-color="#9E9E9E"/>
+    </linearGradient>
+  </defs>
+  <!-- Can top rim -->
+  <rect x="52" y="24" width="96" height="18" rx="8" fill="url(#metal)"/>
+  <!-- Can body -->
+  <rect x="42" y="38" width="116" height="326" rx="26" fill="url(#canEnergy)"/>
+  <!-- Can bottom rim -->
+  <rect x="52" y="356" width="96" height="14" rx="6" fill="url(#metal)"/>
+  <!-- Shading overlay -->
+  <rect x="42" y="38" width="24" height="326" rx="12" fill="white" opacity="0.12"/>
+  <rect x="134" y="38" width="24" height="326" rx="12" fill="black" opacity="0.25"/>
+  <!-- Claw / Lightning Mark -->
+  <path d="M80 120 L96 190 L90 200 L110 270 L114 260 L102 196 L108 190 Z" fill="#00FF66"/>
+  <text x="100" y="315" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="14" letter-spacing="3">ENERGY</text>
+  <text x="100" y="335" text-anchor="middle" fill="#00FF66" font-family="'Inter', sans-serif" font-weight="700" font-size="10">500 ML</text>
+</svg>

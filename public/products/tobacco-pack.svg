@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="packGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2C2C2C"/>
+      <stop offset="50%" stop-color="#1A1A1A"/>
+      <stop offset="100%" stop-color="#0D0D0D"/>
+    </linearGradient>
+    <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F39C12"/>
+      <stop offset="50%" stop-color="#F1C40F"/>
+      <stop offset="100%" stop-color="#D68910"/>
+    </linearGradient>
+    <linearGradient id="redAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E74C3C"/>
+      <stop offset="100%" stop-color="#C0392B"/>
+    </linearGradient>
+    <filter id="packShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Cigarettes peeking at top -->
+  <rect x="75" y="75" width="8" height="30" rx="3" fill="#F8C471"/>
+  <rect x="75" y="70" width="8" height="10" rx="2" fill="#FDFEFE"/>
+  <rect x="87" y="73" width="8" height="30" rx="3" fill="#F8C471"/>
+  <rect x="87" y="68" width="8" height="10" rx="2" fill="#FDFEFE"/>
+  <rect x="99" y="77" width="8" height="30" rx="3" fill="#F8C471"/>
+  <rect x="99" y="72" width="8" height="10" rx="2" fill="#FDFEFE"/>
+  <rect x="111" y="74" width="8" height="30" rx="3" fill="#F8C471"/>
+  <rect x="111" y="69" width="8" height="10" rx="2" fill="#FDFEFE"/>
+
+  <!-- Main Cigarette Pack Body -->
+  <rect x="55" y="95" width="90" height="175" rx="8" fill="url(#packGrad)" stroke="#333" stroke-width="2" filter="url(#packShadow)"/>
+
+  <!-- Flip Top Lid Line -->
+  <path d="M55 145 L145 145" stroke="url(#goldAccent)" stroke-width="2"/>
+  <polygon points="90,145 100,152 110,145" fill="url(#goldAccent)"/>
+
+  <!-- Brand Geometric Emblem -->
+  <circle cx="100" cy="180" r="18" fill="url(#redAccent)"/>
+  <polygon points="100,169 109,186 91,186" fill="#FFFFFF"/>
+  <circle cx="100" cy="181" r="4" fill="#C0392B"/>
+
+  <!-- Brand Typography -->
+  <text x="100" y="214" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', -apple-system, sans-serif" font-weight="900" font-size="12" letter-spacing="2">RED LIGHT</text>
+  <text x="100" y="226" text-anchor="middle" fill="url(#goldAccent)" font-family="'Inter', -apple-system, sans-serif" font-weight="700" font-size="7" letter-spacing="1.5">20 CIGARETTES</text>
+
+  <!-- Health Warning Strip -->
+  <rect x="62" y="238" width="76" height="24" rx="3" fill="#FFFFFF"/>
+  <rect x="64" y="240" width="72" height="20" rx="2" fill="#000000"/>
+  <text x="100" y="253" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', -apple-system, sans-serif" font-weight="800" font-size="7">FUMER NUIT</text>
+
+  <!-- 18+ Badge -->
+  <circle cx="100" cy="295" r="14" fill="#E74C3C" stroke="#FFFFFF" stroke-width="1.5"/>
+  <text x="100" y="300" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', -apple-system, sans-serif" font-weight="900" font-size="11">18+</text>
+</svg>

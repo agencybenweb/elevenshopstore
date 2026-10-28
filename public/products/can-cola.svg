@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="canCola" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E50914"/>
+      <stop offset="60%" stop-color="#B20710"/>
+      <stop offset="100%" stop-color="#670006"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ECEFF1"/>
+      <stop offset="100%" stop-color="#90A4AE"/>
+    </linearGradient>
+  </defs>
+  <rect x="52" y="30" width="96" height="18" rx="8" fill="url(#metal)"/>
+  <rect x="42" y="44" width="116" height="320" rx="26" fill="url(#canCola)"/>
+  <rect x="52" y="356" width="96" height="14" rx="6" fill="url(#metal)"/>
+  <rect x="42" y="44" width="22" height="320" rx="10" fill="white" opacity="0.15"/>
+  <!-- Ribbon wave -->
+  <path d="M42 160 Q100 130 158 190 L158 215 Q100 155 42 185 Z" fill="#FFFFFF"/>
+  <text x="100" y="248" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="16" letter-spacing="2">ORIGINAL</text>
+  <text x="100" y="272" text-anchor="middle" fill="#FFFFFF" opacity="0.8" font-family="'Inter', sans-serif" font-weight="600" font-size="11">COLA 33CL</text>
+</svg>

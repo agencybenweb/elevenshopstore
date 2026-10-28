@@ -1,0 +1,13 @@
+{
+  "min_order_cents": 0,
+  "delivery_fee_cents": 500,
+  "free_delivery_above_cents": 5000,
+  "allowed_postal_codes": [
+    "42300",
+    "42120",
+    "42370",
+    "42153"
+  ],
+  "is_open": true,
+  "open_message": "Ouvert 24h/24 & 7j/7 — Livraison rapide sur Roanne et alentours"
+}

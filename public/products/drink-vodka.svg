@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="spiritGlass" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2C3E50"/>
+      <stop offset="35%" stop-color="#4CA1AF"/>
+      <stop offset="65%" stop-color="#C4E0E5"/>
+      <stop offset="100%" stop-color="#2C3E50"/>
+    </linearGradient>
+    <linearGradient id="silverCap" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#BDC3C7"/>
+      <stop offset="100%" stop-color="#7F8C8D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cap -->
+  <rect x="88" y="30" width="24" height="20" rx="3" fill="url(#silverCap)"/>
+  
+  <!-- Bottle Contour -->
+  <path d="M92 50 L92 110 L75 140 L70 335 Q100 355 130 335 L125 140 L108 110 L108 50 Z" fill="url(#spiritGlass)" opacity="0.95"/>
+
+  <!-- Bottle Label -->
+  <rect x="74" y="180" width="52" height="95" rx="5" fill="#0F172A" stroke="url(#silverCap)" stroke-width="1.5"/>
+  <circle cx="100" cy="205" r="12" fill="#E74C3C"/>
+  <text x="100" y="210" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="12">XI</text>
+  <text x="100" y="232" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="9" letter-spacing="2">VODKA</text>
+  <text x="100" y="244" text-anchor="middle" fill="#00DFD8" font-family="'Inter', sans-serif" font-weight="800" font-size="7">PREMIUM ICE</text>
+  <text x="100" y="258" text-anchor="middle" fill="#CBD5E1" font-family="'Inter', sans-serif" font-weight="600" font-size="6">70 CL • 37.5% VOL</text>
+
+  <!-- 18+ tag -->
+  <circle cx="100" cy="305" r="10" fill="#E74C3C"/>
+  <text x="100" y="309" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="8">18+</text>
+</svg>

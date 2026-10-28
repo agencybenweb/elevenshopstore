@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="pastaCup" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A5276"/>
+      <stop offset="100%" stop-color="#113349"/>
+    </linearGradient>
+    <linearGradient id="pastaTop" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F9E79F"/>
+      <stop offset="100%" stop-color="#F39C12"/>
+    </linearGradient>
+  </defs>
+  <!-- Cup Lid -->
+  <ellipse cx="100" cy="130" rx="60" ry="16" fill="url(#pastaTop)"/>
+  <rect x="40" y="130" width="120" height="8" fill="#F39C12"/>
+  <!-- Cup body -->
+  <path d="M42 135 L54 300 Q100 315 146 300 L158 135 Z" fill="url(#pastaCup)"/>
+  <!-- Fork icon -->
+  <circle cx="100" cy="205" r="30" fill="#FFFFFF" opacity="0.15"/>
+  <text x="100" y="248" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="14" letter-spacing="1">PASTABOX</text>
+  <text x="100" y="268" text-anchor="middle" fill="#F39C12" font-family="'Inter', sans-serif" font-weight="700" font-size="10">CHAUD EN 2 MIN</text>
+</svg>

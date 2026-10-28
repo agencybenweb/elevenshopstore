@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 400" width="200" height="400">
+  <defs>
+    <linearGradient id="canTea" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7675"/>
+      <stop offset="60%" stop-color="#FAB1A0"/>
+      <stop offset="100%" stop-color="#F39C12"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ECEFF1"/>
+      <stop offset="100%" stop-color="#90A4AE"/>
+    </linearGradient>
+  </defs>
+  <rect x="52" y="30" width="96" height="18" rx="8" fill="url(#metal)"/>
+  <rect x="42" y="44" width="116" height="320" rx="26" fill="url(#canTea)"/>
+  <rect x="52" y="356" width="96" height="14" rx="6" fill="url(#metal)"/>
+  <circle cx="100" cy="175" r="28" fill="#D63031" opacity="0.8"/>
+  <path d="M100 145 C115 130 130 145 100 160 C70 145 85 130 100 145 Z" fill="#2ECC71"/>
+  <text x="100" y="240" text-anchor="middle" fill="#FFFFFF" font-family="'Inter', sans-serif" font-weight="900" font-size="16" letter-spacing="1">ICE TEA</text>
+  <text x="100" y="262" text-anchor="middle" fill="#2D3436" font-family="'Inter', sans-serif" font-weight="700" font-size="11">PÊCHE 33CL</text>
+</svg>
