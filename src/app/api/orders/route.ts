@@ -242,7 +242,18 @@ export async function POST(req: NextRequest) {
               price_cents: it.price_cents,
               quantity: it.quantity,
             }));
-            await serviceClient.from('order_items').insert(itemRows);
+            const { error: itemErr } = await serviceClient.from('order_items').insert(itemRows);
+            if (itemErr) {
+              console.warn('[Supabase] Retrying order_items insert with product_id null (FK fallback):', itemErr.message);
+              const fallbackRows = validatedItems.map((it) => ({
+                order_id: orderRecord.id,
+                product_id: null,
+                product_name: it.product_name,
+                price_cents: it.price_cents,
+                quantity: it.quantity,
+              }));
+              await serviceClient.from('order_items').insert(fallbackRows);
+            }
           } else {
             console.error('[Supabase] Error inserting order:', ordErr);
             saveInMemoryOrder(orderRecord);
