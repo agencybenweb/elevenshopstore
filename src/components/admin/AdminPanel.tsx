@@ -42,6 +42,9 @@ import {
   Shield,
   Layers,
   Sparkles,
+  Upload,
+  Camera,
+  Loader2,
 } from 'lucide-react';
 
 /* ── Web Audio Chime Synthesizer ─────────── */
@@ -105,6 +108,86 @@ const IMAGE_PRESETS = [
   { label: 'Puff Vape', url: '/products/tobacco-puff.svg', icon: '💨' },
 ];
 
+/* ── Client-side Image Compression Helper ──── */
+async function compressImageFile(
+  file: File,
+  maxDimension = 800,
+  quality = 0.82
+): Promise<{ blob: Blob; dataUrl: string }> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      return reject(new Error('Environnement non supporté'));
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          }
+        } else {
+          if (height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          return reject(new Error('Impossible d’initialiser le traitement de l’image'));
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Try WebP first, fallback to JPEG
+        let dataUrl = '';
+        try {
+          dataUrl = canvas.toDataURL('image/webp', quality);
+          if (!dataUrl.startsWith('data:image/webp')) {
+            dataUrl = canvas.toDataURL('image/jpeg', quality);
+          }
+        } catch {
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve({ blob, dataUrl });
+            } else {
+              canvas.toBlob(
+                (jpegBlob) => {
+                  if (jpegBlob) {
+                    resolve({ blob: jpegBlob, dataUrl });
+                  } else {
+                    reject(new Error('Échec de la compression de l’image'));
+                  }
+                },
+                'image/jpeg',
+                quality
+              );
+            }
+          },
+          'image/webp',
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('Impossible de lire le fichier image sélectionné'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Erreur lors de la lecture du fichier'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function AdminPanel() {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -137,6 +220,10 @@ export default function AdminPanel() {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [isSavingProduct, setIsSavingProduct] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Device Image Upload State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
 
   // Form state for Add / Edit
   const [productForm, setProductForm] = useState<{
@@ -421,6 +508,48 @@ export default function AdminPanel() {
       is_age_restricted: !!product.is_age_restricted,
     });
     setIsEditModalOpen(true);
+  };
+
+  /* ── Import Image From Device ────────────── */
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input value so user can re-select the same file if needed
+    e.target.value = '';
+
+    setIsUploadingImage(true);
+    try {
+      // 1. Client-side compression to lightweight WebP (~30-60KB)
+      const { blob, dataUrl } = await compressImageFile(file, 800, 0.82);
+
+      // 2. Upload to /api/admin/upload
+      const formData = new FormData();
+      formData.append('file', blob, file.name.replace(/\.[^/.]+$/, '') + '.webp');
+      formData.append('dataUrl', dataUrl);
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "Erreur lors de l'envoi de l'image");
+      }
+
+      setProductForm((prev) => ({
+        ...prev,
+        image_url: data.url,
+      }));
+
+      showToast('📸 Image importée et optimisée avec succès !', 'success');
+    } catch (err: any) {
+      console.error('[Upload error]', err);
+      showToast(err.message || "Erreur lors de l'import de l'image", 'error');
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   /* ── Submit Add / Edit Form ──────────────── */
@@ -1617,35 +1746,75 @@ export default function AdminPanel() {
               </div>
 
               {/* Image URL & Presets */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-semibold text-white/80">
                     Image du produit
                   </label>
-                  <span className="text-[11px] text-white/40">Presets rapides ou URL externe</span>
+                  <span className="text-[11px] text-white/40">Appareil, URL ou presets</span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {/* Image Preview */}
-                  <div className="h-16 w-16 flex-shrink-0 rounded-2xl bg-black/80 border border-white/15 p-1.5 flex items-center justify-center">
-                    <img
-                      src={productForm.image_url || '/products/can-citrus.svg'}
-                      alt="Aperçu"
-                      className="h-full w-full object-contain"
-                      onError={(e) => {
-                        (e.target as any).src = '/products/can-citrus.svg';
-                      }}
-                    />
-                  </div>
+                {/* Import depuis l'appareil button & preview */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    {/* Image Preview with loader overlay */}
+                    <div className="relative h-20 w-20 flex-shrink-0 mx-auto sm:mx-0 rounded-2xl bg-black/80 border border-white/15 p-2 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={productForm.image_url || '/products/can-citrus.svg'}
+                        alt="Aperçu"
+                        className="h-full w-full object-contain"
+                        onError={(e) => {
+                          (e.target as any).src = '/products/can-citrus.svg';
+                        }}
+                      />
+                      {isUploadingImage && (
+                        <div className="absolute inset-0 bg-black/85 backdrop-blur-xs flex flex-col items-center justify-center gap-1 text-center p-1">
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                          <span className="text-[9px] font-bold text-white">Envoi...</span>
+                        </div>
+                      )}
+                    </div>
 
-                  {/* URL Input */}
-                  <input
-                    type="text"
-                    value={productForm.image_url}
-                    onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
-                    placeholder="/products/can-energy.svg ou URL https://..."
-                    className="flex-1 rounded-2xl border border-white/10 bg-black/50 px-4 py-2.5 text-xs text-white placeholder-white/30 focus:border-primary focus:outline-none font-mono"
-                  />
+                    <div className="flex-1 flex flex-col gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+
+                      <button
+                        type="button"
+                        disabled={isUploadingImage}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-primary/20 hover:bg-primary/30 border border-primary/40 px-4 py-2.5 text-xs font-bold text-primary transition-all shadow-sm shadow-primary/10 active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                      >
+                        {isUploadingImage ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                            <span>Optimisation & Envoi en cours...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Camera className="h-4 w-4 text-primary" />
+                            <Upload className="h-3.5 w-3.5 text-primary/70" />
+                            <span>📸 Importer depuis l&apos;appareil (Photo / Galerie)</span>
+                          </>
+                        )}
+                      </button>
+
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={productForm.image_url}
+                          onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
+                          placeholder="/products/can-energy.svg ou URL https://..."
+                          className="w-full rounded-xl border border-white/10 bg-black/50 px-3 py-2 text-xs text-white placeholder-white/30 focus:border-primary focus:outline-none font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Presets Grid */}
