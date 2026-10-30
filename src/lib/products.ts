@@ -24,24 +24,6 @@ export async function getProducts(options?: {
   categoryId?: string;
   onlyAvailable?: boolean;
 }): Promise<Product[]> {
-  if (isSupabaseConfigured && supabase) {
-    try {
-      let query = supabase.from('products').select('*').order('sort_order', { ascending: true });
-      if (options?.categoryId && options.categoryId !== 'all') {
-        query = query.eq('category_id', options.categoryId);
-      }
-      if (options?.onlyAvailable) {
-        query = query.eq('is_available', true);
-      }
-      const { data, error } = await query;
-      if (!error && data && data.length > 0) {
-        return data as Product[];
-      }
-    } catch {
-      // Fallback
-    }
-  }
-
   let list = await getActiveProductsAsync();
   if (options?.categoryId && options.categoryId !== 'all') {
     list = list.filter((p) => p.category_id === options.categoryId);
