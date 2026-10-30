@@ -54,7 +54,9 @@ export function getActiveProducts(): Product[] {
 
 /**
  * Asynchronous getter that queries Supabase PostgreSQL first for live real-time data,
- * falling back gracefully to memory/disk.
+ * merging with DEMO_PRODUCTS so that the full catalog is always preserved,
+ * while any customized products (like updated photos, prices, stocks, or new products)
+ * override the defaults seamlessly.
  */
 export async function getActiveProductsAsync(): Promise<Product[]> {
   if (isSupabaseConfigured) {
@@ -66,39 +68,35 @@ export async function getActiveProductsAsync(): Promise<Product[]> {
           .select('*')
           .order('sort_order', { ascending: true });
 
-        if (!error && data && data.length > 0) {
-          global.__ELEVEN_PRODUCTS__ = data as Product[];
-          saveProductsToDisk(global.__ELEVEN_PRODUCTS__);
-          return global.__ELEVEN_PRODUCTS__;
-        }
+        if (!error && data) {
+          // Map of customized products saved in Supabase
+          const supabaseMap = new Map((data as Product[]).map((p) => [p.id, p]));
 
-        // If Supabase table is empty, seed it with DEMO_PRODUCTS so it permanently holds data
-        if (!error && (!data || data.length === 0)) {
-          const seeds = JSON.parse(JSON.stringify(DEMO_PRODUCTS));
-          try {
-            await client.from('products').upsert(
-              seeds.map((p: Product) => ({
-                id: p.id,
-                nom: p.nom,
-                slug: p.slug,
-                description: p.description || '',
-                price_cents: p.price_cents,
-                image_url: p.image_url,
-                category_id: p.category_id || null,
-                is_available: p.is_available,
-                stock: p.stock ?? null,
-                sort_order: p.sort_order ?? 0,
-                is_featured: !!p.is_featured,
-                is_age_restricted: !!p.is_age_restricted,
-                hero_bg_color: p.hero_bg_color || null,
-                hero_big_word: p.hero_big_word || null,
-              }))
-            );
-          } catch (seedErr) {
-            console.warn('[products-store] Seeding Supabase notice:', seedErr);
+          // Merge: use Supabase customization if present, otherwise keep demo product
+          const merged: Product[] = [];
+
+          for (const demo of DEMO_PRODUCTS) {
+            const custom = supabaseMap.get(demo.id);
+            if (custom) {
+              supabaseMap.delete(demo.id);
+              if (custom.nom !== '__DELETED__') {
+                merged.push(custom);
+              }
+            } else {
+              merged.push(demo);
+            }
           }
-          global.__ELEVEN_PRODUCTS__ = seeds;
-          return seeds;
+
+          // Add any new products added by the user via Admin that are not in DEMO_PRODUCTS
+          for (const extra of supabaseMap.values()) {
+            if (extra.nom !== '__DELETED__') {
+              merged.unshift(extra);
+            }
+          }
+
+          global.__ELEVEN_PRODUCTS__ = merged;
+          saveProductsToDisk(global.__ELEVEN_PRODUCTS__);
+          return merged;
         }
       }
     } catch (err) {
@@ -234,7 +232,15 @@ export async function deleteProduct(id: string): Promise<boolean> {
     try {
       const client = getServiceRoleClient();
       if (client) {
-        await client.from('products').delete().eq('id', id);
+        await client.from('products').upsert({
+          id,
+          nom: '__DELETED__',
+          slug: `deleted-${id}-${Date.now()}`,
+          description: '',
+          price_cents: 1,
+          image_url: '',
+          is_available: false,
+        });
       }
     } catch (err) {
       console.error('Supabase product delete error:', err);

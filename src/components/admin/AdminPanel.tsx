@@ -100,6 +100,7 @@ const IMAGE_PRESETS = [
   { label: 'Pasta Box', url: '/products/fresh-pastabox.svg', icon: '🍝' },
   { label: 'Nouilles', url: '/products/grocery-noodles.svg', icon: '🍜' },
   { label: 'Glace Tub', url: '/products/icecream-tub.svg', icon: '🍨' },
+  { label: 'Glace Kinder', url: '/products/kinder-bueno-icecream.jpg', icon: '🍦' },
   { label: 'Chargeur', url: '/products/tech-charger.svg', icon: '🔌' },
   { label: 'Câble USB-C', url: '/products/tech-cable.svg', icon: '⚡' },
   { label: 'Bière Bouteille', url: '/products/drink-beer.svg', icon: '🍺' },

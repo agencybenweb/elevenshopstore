@@ -1327,6 +1327,19 @@ export const DEMO_PRODUCTS: Product[] = [
 
   // [Gamme Kinder & Nutella]
   {
+    id: 'sweet-kinder-bueno-icecream',
+    nom: 'Glace Cône Kinder Bueno',
+    slug: 'glace-cone-kinder-bueno',
+    description: 'Cône croustillant garni d’une onctueuse crème glacée à la noisette, cœur chocolat fondant et éclats croquants.',
+    price_cents: 350,
+    image_url: '/products/kinder-bueno-icecream.jpg',
+    category_id: 'cat-confiseries',
+    is_available: true,
+    stock: 25,
+    sort_order: 18,
+    is_featured: true,
+  },
+  {
     id: 'sweet-kinder-cookies',
     nom: 'Kinder Crunchy Cookies',
     slug: 'kinder-crunchy-cookies',
