@@ -4,7 +4,10 @@ import { Product } from '@/types/database';
 import { DEMO_PRODUCTS } from '@/lib/demo-data';
 import { getServiceRoleClient, isSupabaseConfigured } from '@/lib/supabase';
 
-const PRODUCTS_FILE = path.join(process.cwd(), '.products.json');
+// On Vercel / serverless, process.cwd() is read-only (/var/task). /tmp is writable.
+const PRODUCTS_FILE = process.env.VERCEL
+  ? path.join('/tmp', '.products.json')
+  : path.join(process.cwd(), '.products.json');
 
 declare global {
   // eslint-disable-next-line no-var
@@ -21,10 +24,10 @@ function loadProductsFromDisk(): Product[] {
       }
     }
   } catch (err) {
-    console.error('Failed to read .products.json:', err);
+    console.warn('[products-store] Notice reading .products.json:', err);
   }
 
-  // Fallback to DEMO_PRODUCTS and persist
+  // Fallback to DEMO_PRODUCTS
   const defaults = JSON.parse(JSON.stringify(DEMO_PRODUCTS));
   saveProductsToDisk(defaults);
   return defaults;
@@ -34,19 +37,83 @@ function saveProductsToDisk(products: Product[]) {
   try {
     fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2), 'utf-8');
   } catch (err) {
-    console.error('Failed to write .products.json:', err);
+    // Non-fatal on serverless if disk is constrained
+    console.warn('[products-store] Notice writing .products.json:', err);
   }
 }
 
+/**
+ * Synchronous getter (returns cached memory or local disk)
+ */
 export function getActiveProducts(): Product[] {
-  if (!global.__ELEVEN_PRODUCTS__) {
+  if (!global.__ELEVEN_PRODUCTS__ || global.__ELEVEN_PRODUCTS__.length === 0) {
     global.__ELEVEN_PRODUCTS__ = loadProductsFromDisk();
   }
   return global.__ELEVEN_PRODUCTS__;
 }
 
+/**
+ * Asynchronous getter that queries Supabase PostgreSQL first for live real-time data,
+ * falling back gracefully to memory/disk.
+ */
+export async function getActiveProductsAsync(): Promise<Product[]> {
+  if (isSupabaseConfigured) {
+    try {
+      const client = getServiceRoleClient();
+      if (client) {
+        const { data, error } = await client
+          .from('products')
+          .select('*')
+          .order('sort_order', { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          global.__ELEVEN_PRODUCTS__ = data as Product[];
+          saveProductsToDisk(global.__ELEVEN_PRODUCTS__);
+          return global.__ELEVEN_PRODUCTS__;
+        }
+
+        // If Supabase table is empty, seed it with DEMO_PRODUCTS so it permanently holds data
+        if (!error && (!data || data.length === 0)) {
+          const seeds = JSON.parse(JSON.stringify(DEMO_PRODUCTS));
+          try {
+            await client.from('products').upsert(
+              seeds.map((p: Product) => ({
+                id: p.id,
+                nom: p.nom,
+                slug: p.slug,
+                description: p.description || '',
+                price_cents: p.price_cents,
+                image_url: p.image_url,
+                category_id: p.category_id || null,
+                is_available: p.is_available,
+                stock: p.stock ?? null,
+                sort_order: p.sort_order ?? 0,
+                is_featured: !!p.is_featured,
+                is_age_restricted: !!p.is_age_restricted,
+                hero_bg_color: p.hero_bg_color || null,
+                hero_big_word: p.hero_big_word || null,
+              }))
+            );
+          } catch (seedErr) {
+            console.warn('[products-store] Seeding Supabase notice:', seedErr);
+          }
+          global.__ELEVEN_PRODUCTS__ = seeds;
+          return seeds;
+        }
+      }
+    } catch (err) {
+      console.warn('[products-store] Supabase fetch exception:', err);
+    }
+  }
+
+  return getActiveProducts();
+}
+
+/**
+ * Saves or updates a product permanently in Supabase PostgreSQL and local cache.
+ */
 export async function saveProduct(productInput: Partial<Product> & { id?: string }): Promise<Product> {
-  const current = getActiveProducts();
+  const current = await getActiveProductsAsync();
   const id = productInput.id || `prod-${Date.now()}`;
   const idx = current.findIndex((p) => p.id === id);
 
@@ -92,12 +159,53 @@ export async function saveProduct(productInput: Partial<Product> & { id?: string
   global.__ELEVEN_PRODUCTS__ = [...current];
   saveProductsToDisk(global.__ELEVEN_PRODUCTS__);
 
-  // Sync with Supabase if configured
+  // Sync permanently with Supabase PostgreSQL if configured
   if (isSupabaseConfigured) {
     try {
       const client = getServiceRoleClient();
       if (client) {
-        await client.from('products').upsert(updatedProduct);
+        const dbPayload = {
+          id: updatedProduct.id,
+          nom: updatedProduct.nom,
+          slug: updatedProduct.slug,
+          description: updatedProduct.description || '',
+          price_cents: Number(updatedProduct.price_cents),
+          image_url: updatedProduct.image_url,
+          category_id: updatedProduct.category_id || null,
+          is_available: Boolean(updatedProduct.is_available),
+          stock: updatedProduct.stock != null ? Number(updatedProduct.stock) : null,
+          sort_order: Number(updatedProduct.sort_order ?? 0),
+          is_featured: Boolean(updatedProduct.is_featured),
+          is_age_restricted: Boolean(updatedProduct.is_age_restricted),
+          hero_bg_color: updatedProduct.hero_bg_color || null,
+          hero_big_word: updatedProduct.hero_big_word || null,
+        };
+
+        // Ensure category exists so foreign key constraint never fails
+        if (dbPayload.category_id) {
+          try {
+            await client.from('categories').upsert(
+              {
+                id: dbPayload.category_id,
+                name: dbPayload.category_id.replace(/^cat-/, '').toUpperCase(),
+                slug: dbPayload.category_id.replace(/^cat-/, ''),
+                sort_order: 99,
+              },
+              { onConflict: 'id' }
+            );
+          } catch {
+            // ignore category upsert error
+          }
+        }
+
+        const { error: upsertErr } = await client.from('products').upsert(dbPayload);
+        if (upsertErr) {
+          console.warn('[products-store] Supabase product upsert notice:', upsertErr.message);
+          // If foreign key constraint failed on category_id, retry with category_id: null
+          if (upsertErr.code === '23503' || upsertErr.message?.includes('foreign key')) {
+            await client.from('products').upsert({ ...dbPayload, category_id: null });
+          }
+        }
       }
     } catch (err) {
       console.error('Supabase product upsert error:', err);
@@ -107,8 +215,11 @@ export async function saveProduct(productInput: Partial<Product> & { id?: string
   return updatedProduct;
 }
 
+/**
+ * Deletes a product permanently from Supabase PostgreSQL and local cache.
+ */
 export async function deleteProduct(id: string): Promise<boolean> {
-  const current = getActiveProducts();
+  const current = await getActiveProductsAsync();
   const filtered = current.filter((p) => p.id !== id);
 
   if (filtered.length === current.length) {

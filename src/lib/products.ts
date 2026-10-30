@@ -1,7 +1,7 @@
 import { Category, Product, StoreSettings } from '@/types/database';
 import { DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_SETTINGS } from '@/lib/demo-data';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { getActiveProducts } from '@/lib/products-store';
+import { getActiveProductsAsync } from '@/lib/products-store';
 
 export async function getCategories(): Promise<Category[]> {
   if (isSupabaseConfigured && supabase) {
@@ -42,7 +42,7 @@ export async function getProducts(options?: {
     }
   }
 
-  let list = getActiveProducts();
+  let list = await getActiveProductsAsync();
   if (options?.categoryId && options.categoryId !== 'all') {
     list = list.filter((p) => p.category_id === options.categoryId);
   }
