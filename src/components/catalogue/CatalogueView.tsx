@@ -24,6 +24,60 @@ interface CatalogueViewProps {
   initialSettings?: StoreSettings;
 }
 
+function getProductGlowColor(p: Product): string {
+  if (p.hero_bg_color) return p.hero_bg_color;
+
+  const lower = (p.nom + ' ' + (p.category_id || '')).toLowerCase();
+
+  // Monster & Energy specific glows
+  if (lower.includes('monster') && lower.includes('strawberry')) return 'rgba(255, 51, 119, 0.40)';
+  if (lower.includes('monster') && lower.includes('mango')) return 'rgba(0, 229, 255, 0.42)';
+  if (lower.includes('monster') && lower.includes('white')) return 'rgba(180, 220, 255, 0.32)';
+  if (lower.includes('monster') && (lower.includes('original') || lower.includes('noir'))) return 'rgba(0, 255, 102, 0.38)';
+  if (lower.includes('monster') && lower.includes('monarch')) return 'rgba(255, 153, 51, 0.40)';
+  if (lower.includes('monster')) return 'rgba(0, 255, 102, 0.32)';
+
+  // Red Bull specific glows
+  if (lower.includes('red bull') && lower.includes('ruby')) return 'rgba(255, 0, 77, 0.42)';
+  if (lower.includes('red bull') && lower.includes('tropical')) return 'rgba(255, 204, 0, 0.40)';
+  if (lower.includes('red bull') && lower.includes('white')) return 'rgba(240, 245, 255, 0.30)';
+  if (lower.includes('red bull')) return 'rgba(0, 153, 255, 0.38)';
+
+  // Takis & Snacks
+  if (lower.includes('takis') && lower.includes('blue')) return 'rgba(0, 170, 255, 0.45)';
+  if (lower.includes('takis') || lower.includes('fuego')) return 'rgba(255, 51, 0, 0.45)';
+  if (lower.includes('doritos')) return 'rgba(255, 128, 0, 0.35)';
+  if (lower.includes('chips')) return 'rgba(255, 215, 0, 0.30)';
+
+  // Sodas
+  if (lower.includes('coca')) return 'rgba(255, 26, 40, 0.40)';
+  if (lower.includes('dr pepper') && lower.includes('coconut')) return 'rgba(0, 204, 180, 0.40)';
+  if (lower.includes('dr pepper')) return 'rgba(180, 0, 50, 0.35)';
+  if (lower.includes('sprite')) return 'rgba(0, 230, 118, 0.35)';
+  if (lower.includes('fanta') || lower.includes('oasis')) return 'rgba(255, 140, 0, 0.35)';
+  if (lower.includes('ice tea') || lower.includes('fuze')) return 'rgba(255, 179, 0, 0.35)';
+
+  // Kinder, Glaces & Confiseries
+  if (lower.includes('kinder')) return 'rgba(255, 140, 0, 0.40)';
+  if (lower.includes('glace') || lower.includes('ice cream')) return 'rgba(255, 180, 80, 0.35)';
+  if (lower.includes('haribo') || lower.includes('candy')) return 'rgba(255, 0, 128, 0.30)';
+  if (lower.includes('chocolat')) return 'rgba(180, 100, 50, 0.30)';
+
+  // Alcools & Bières
+  if (lower.includes('desperados')) return 'rgba(255, 180, 0, 0.40)';
+  if (lower.includes('heineken') || lower.includes('bière')) return 'rgba(0, 204, 68, 0.35)';
+  if (lower.includes('vodka') || lower.includes('alcool')) return 'rgba(180, 220, 255, 0.35)';
+
+  // Default by Category
+  if (p.category_id === 'cat-energy') return 'rgba(0, 255, 128, 0.25)';
+  if (p.category_id === 'cat-sodas') return 'rgba(255, 51, 85, 0.25)';
+  if (p.category_id === 'cat-snacks') return 'rgba(255, 153, 0, 0.25)';
+  if (p.category_id === 'cat-confiseries') return 'rgba(255, 0, 128, 0.25)';
+  if (p.category_id === 'cat-alcool') return 'rgba(255, 180, 0, 0.25)';
+
+  return 'rgba(255, 46, 99, 0.20)';
+}
+
 export default function CatalogueView({
   initialCategories,
   initialProducts,
@@ -308,12 +362,20 @@ export default function CatalogueView({
                     )}
                   </div>
 
-                  {/* Product Image */}
+                  {/* Product Image with Ambient Smoke / Glow */}
                   <div className="relative mx-auto my-3 flex h-32 w-32 items-center justify-center sm:h-44 sm:w-44">
+                    {/* Immersive ambient colored smoke/glow */}
+                    <div
+                      className="absolute -inset-1 rounded-full blur-2xl opacity-60 transition-all duration-500 group-hover:scale-115 group-hover:opacity-90 pointer-events-none"
+                      style={{
+                        background: `radial-gradient(circle at 50% 50%, ${getProductGlowColor(p)} 0%, transparent 70%)`,
+                      }}
+                    />
+
                     <img
                       src={p.image_url}
                       alt={p.nom}
-                      className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+                      className="relative z-10 h-full w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
 

@@ -125,10 +125,10 @@ export function HowItWorks() {
 
 /* ── Popular Products ────────────────────── */
 const popularProducts = [
-  { id: 'energy-monster-strawberry',  name: 'Monster Ultra Strawberry Dreams', priceCents: 290, price: '2,90 €', image: '/products/card-monster-strawberry.jpg',  tag: '⭐ Top' },
-  { id: 'energy-redbull-ruby',        name: 'Red Bull Ruby Edition',           priceCents: 320, price: '3,20 €', image: '/products/card-redbull-ruby.jpg',        tag: '⭐ Top' },
-  { id: 'snack-takis-blue-heat',      name: 'Takis Blue Heat',                 priceCents: 350, price: '3,50 €', image: '/products/card-takis-blue.jpg',          tag: 'Tendance' },
-  { id: 'soda-drpepper-coconut',      name: 'Dr Pepper Creamy Coconut',        priceCents: 250, price: '2,50 €', image: '/products/card-drpepper-coconut.jpg',    tag: 'Import 🇺🇸' },
+  { id: 'energy-monster-strawberry',  name: 'Monster Ultra Strawberry Dreams', priceCents: 290, price: '2,90 €', image: '/products/card-monster-strawberry.png',  tag: '⭐ Top', glow: 'rgba(255, 51, 119, 0.40)' },
+  { id: 'energy-redbull-ruby',        name: 'Red Bull Ruby Edition',           priceCents: 320, price: '3,20 €', image: '/products/card-redbull-ruby.png',        tag: '⭐ Top', glow: 'rgba(255, 0, 77, 0.40)' },
+  { id: 'snack-takis-blue-heat',      name: 'Takis Blue Heat',                 priceCents: 350, price: '3,50 €', image: '/products/card-takis-blue.png',          tag: 'Tendance', glow: 'rgba(0, 170, 255, 0.45)' },
+  { id: 'soda-drpepper-coconut',      name: 'Dr Pepper Creamy Coconut',        priceCents: 250, price: '2,50 €', image: '/products/card-drpepper-coconut.png',    tag: 'Import 🇺🇸', glow: 'rgba(0, 204, 180, 0.40)' },
 ];
 
 export function PopularProducts() {
@@ -198,12 +198,18 @@ export function PopularProducts() {
                 )}
               </div>
 
-              {/* Product photo — centered, rounded with zero overlap */}
-              <div className="mx-auto mb-4 flex h-32 w-32 items-center justify-center md:h-36 md:w-36 overflow-hidden rounded-2xl bg-black/40 border border-white/5">
+              {/* Product photo with colored ambient smoke/glow */}
+              <div className="relative mx-auto mb-4 flex h-32 w-32 items-center justify-center md:h-36 md:w-36">
+                <div
+                  className="absolute -inset-1 rounded-full blur-2xl opacity-60 transition-all duration-500 group-hover:scale-115 group-hover:opacity-90 pointer-events-none"
+                  style={{
+                    background: `radial-gradient(circle at 50% 50%, ${p.glow} 0%, transparent 70%)`,
+                  }}
+                />
                 <img
                   src={p.image}
                   alt={p.name}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="relative z-10 h-full w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
 
