@@ -593,7 +593,7 @@ export const DEMO_PRODUCTS: Product[] = [
     slug: 'monster-juiced-monarch',
     description: 'Pêche et nectarine juteuses associées au blend d’énergie Monster.',
     price_cents: 280,
-    image_url: '/products/can-energy.svg',
+    image_url: '/products/card-monster-monarch.png',
     category_id: 'cat-energy',
     is_available: true,
     stock: 20,
