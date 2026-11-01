@@ -32,16 +32,25 @@ function getProductGlowColor(p: Product): string {
   // Monster & Energy specific glows
   if (lower.includes('monster') && lower.includes('strawberry')) return 'rgba(255, 51, 119, 0.40)';
   if (lower.includes('monster') && lower.includes('mango')) return 'rgba(0, 229, 255, 0.42)';
+  if (lower.includes('monster') && lower.includes('pacific')) return 'rgba(255, 60, 110, 0.42)';
+  if (lower.includes('monster') && lower.includes('peachy')) return 'rgba(255, 140, 90, 0.42)';
   if (lower.includes('monster') && lower.includes('white')) return 'rgba(180, 220, 255, 0.32)';
   if (lower.includes('monster') && (lower.includes('original') || lower.includes('noir'))) return 'rgba(0, 255, 102, 0.38)';
   if (lower.includes('monster') && lower.includes('monarch')) return 'rgba(255, 153, 51, 0.40)';
   if (lower.includes('monster')) return 'rgba(0, 255, 102, 0.32)';
 
   // Red Bull specific glows
-  if (lower.includes('red bull') && lower.includes('ruby')) return 'rgba(255, 0, 77, 0.42)';
-  if (lower.includes('red bull') && lower.includes('tropical')) return 'rgba(255, 204, 0, 0.40)';
+  if (lower.includes('red bull') && (lower.includes('ruby') || (lower.includes('red') && lower.includes('edition')))) return 'rgba(255, 0, 77, 0.42)';
+  if (lower.includes('red bull') && (lower.includes('yellow') || lower.includes('tropical'))) return 'rgba(250, 204, 21, 0.45)';
+  if (lower.includes('red bull') && lower.includes('green')) return 'rgba(74, 222, 128, 0.45)';
+  if (lower.includes('red bull') && lower.includes('winter')) return 'rgba(45, 212, 191, 0.42)';
+  if (lower.includes('red bull') && lower.includes('ice')) return 'rgba(56, 189, 248, 0.45)';
+  if (lower.includes('red bull') && lower.includes('sea blue')) return 'rgba(99, 102, 241, 0.45)';
+  if (lower.includes('red bull') && lower.includes('apricot')) return 'rgba(251, 146, 60, 0.45)';
   if (lower.includes('red bull') && lower.includes('white')) return 'rgba(240, 245, 255, 0.30)';
   if (lower.includes('red bull')) return 'rgba(0, 153, 255, 0.38)';
+  if (lower.includes('crazy tiger')) return 'rgba(249, 115, 22, 0.45)';
+  if (lower.includes('ciao')) return 'rgba(236, 72, 153, 0.40)';
 
   // Takis & Snacks
   if (lower.includes('takis') && lower.includes('blue')) return 'rgba(0, 170, 255, 0.45)';

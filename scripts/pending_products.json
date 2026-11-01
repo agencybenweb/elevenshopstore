@@ -1,0 +1,858 @@
+{
+  "already_png": [
+    {
+      "id": "soda-cristaline",
+      "nom": "Eau minérale Cristaline (50 cl)",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-cristaline-50cl.png"
+    },
+    {
+      "id": "soda-perrier",
+      "nom": "Perrier Nature (Canette)",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-perrier-nature.png"
+    },
+    {
+      "id": "soda-lipton-tropical",
+      "nom": "Lipton Ice Tea Tropical",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-lipton-tropical.png"
+    },
+    {
+      "id": "soda-lipton-peche",
+      "nom": "Lipton Ice Tea Pêche",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-lipton-peche.png"
+    },
+    {
+      "id": "soda-lipton-framboise",
+      "nom": "Lipton Ice Tea Framboise",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-lipton-framboise.png"
+    },
+    {
+      "id": "soda-fuze-tea-peche",
+      "nom": "Fuze Tea Pêche",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-fuze-tea-peche.png"
+    },
+    {
+      "id": "soda-coca-original",
+      "nom": "Coca-Cola Original",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-coca-original.png"
+    },
+    {
+      "id": "soda-coca-zero",
+      "nom": "Coca-Cola Zero",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-coca-zero.png"
+    },
+    {
+      "id": "soda-orangina-rouge",
+      "nom": "Orangina Rouge",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-orangina-rouge.png"
+    },
+    {
+      "id": "soda-oasis-tropical",
+      "nom": "Oasis Tropical",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-oasis-tropical.png"
+    },
+    {
+      "id": "soda-sprite",
+      "nom": "Sprite (Canette & Bouteille)",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-sprite-canette.png"
+    },
+    {
+      "id": "soda-drpepper-coconut",
+      "nom": "Dr Pepper Creamy Coconut",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-drpepper-coconut.png"
+    },
+    {
+      "id": "soda-fanta-fraise",
+      "nom": "Fanta Fraise",
+      "category_id": "cat-sodas",
+      "image_url": "/products/card-fanta-fraise.png"
+    },
+    {
+      "id": "energy-monster-monarch",
+      "nom": "Monster Juiced Monarch",
+      "category_id": "cat-energy",
+      "image_url": "/products/card-monster-monarch.png"
+    },
+    {
+      "id": "energy-monster-white",
+      "nom": "Monster Ultra White (Zero)",
+      "category_id": "cat-energy",
+      "image_url": "/products/card-monster-white.png"
+    },
+    {
+      "id": "energy-monster-strawberry",
+      "nom": "Monster Ultra Strawberry Dreams",
+      "category_id": "cat-energy",
+      "image_url": "/products/card-monster-strawberry.png"
+    },
+    {
+      "id": "energy-monster-mango-loco",
+      "nom": "Monster Juiced Mango Loco",
+      "category_id": "cat-energy",
+      "image_url": "/products/card-monster-mango.png"
+    },
+    {
+      "id": "energy-monster-original",
+      "nom": "Monster Energy Original (Noir/Vert)",
+      "category_id": "cat-energy",
+      "image_url": "/products/card-monster-original.png"
+    },
+    {
+      "id": "energy-redbull-original",
+      "nom": "Red Bull Original (250 ml)",
+      "category_id": "cat-energy",
+      "image_url": "/products/card-redbull-original.png"
+    },
+    {
+      "id": "energy-redbull-ruby",
+      "nom": "Red Bull Ruby Edition",
+      "category_id": "cat-energy",
+      "image_url": "/products/card-redbull-ruby.png"
+    },
+    {
+      "id": "snack-pringles-original",
+      "nom": "Pringles Original",
+      "category_id": "cat-snacks",
+      "image_url": "/products/card-pringles-original.png"
+    },
+    {
+      "id": "snack-takis-blue-heat",
+      "nom": "Takis Blue Heat",
+      "category_id": "cat-snacks",
+      "image_url": "/products/card-takis-blue.png"
+    },
+    {
+      "id": "sweet-kinder-bueno-icecream",
+      "nom": "Glace Cône Kinder Bueno",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/kinder-bueno-icecream.png"
+    }
+  ],
+  "still_svg": [
+    {
+      "id": "soda-nestea-limon",
+      "nom": "Nestea Limon",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-nestea-maracuya",
+      "nom": "Nestea Maracuya",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-nestea-frutos-rojos",
+      "nom": "Nestea Frutos Rojos",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-ice-tea.svg"
+    },
+    {
+      "id": "soda-oasis-ice-tea-peche",
+      "nom": "Oasis Ice Tea Pêche",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-ice-tea.svg"
+    },
+    {
+      "id": "soda-oasis-ice-tea-citron-fraise",
+      "nom": "Oasis Ice Tea Citron-Fraise",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-ice-tea.svg"
+    },
+    {
+      "id": "soda-coca-cherry",
+      "nom": "Coca-Cola Cherry",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-coca-vanilla",
+      "nom": "Coca-Cola Vanilla",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-coca-caramel",
+      "nom": "Coca-Cola Caramel",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-orangina-zero",
+      "nom": "Orangina Zero Bleue",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-oasis-pomme-cassis",
+      "nom": "Oasis Pomme Cassis Framboise",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-tropico",
+      "nom": "Tropico Original",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-drpepper-original",
+      "nom": "Dr Pepper Original",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-drpepper-cherry",
+      "nom": "Dr Pepper Cherry",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-drpepper-vanilla-float",
+      "nom": "Dr Pepper Vanilla Float",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-drpepper-blackberry",
+      "nom": "Dr Pepper Blackberry",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-fanta-pomme-verte",
+      "nom": "Fanta Pomme Verte",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-fanta-citron",
+      "nom": "Fanta Citron",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-fanta-berry",
+      "nom": "Fanta Berry (Bleu)",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-fanta-raisin",
+      "nom": "Fanta Raisin (Violet)",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-fanta-peche",
+      "nom": "Fanta Pêche",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-fanta-halloween",
+      "nom": "Fanta Édition Halloween / Mystery",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-sprite-litchi",
+      "nom": "Sprite Import Asiatique (Litchi)",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-fanta-asie-peche",
+      "nom": "Fanta Import Asiatique (Pêche Blanche)",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-schweppes-lemon",
+      "nom": "Schweppes Lemon",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-schweppes-tonic",
+      "nom": "Schweppes Indian Tonic",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-schweppes-pomme",
+      "nom": "Schweppes Pomme",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-schweppes-agrumes",
+      "nom": "Schweppes Agrumes",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-slim-pomme",
+      "nom": "Slim Pomme",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-slim-orange",
+      "nom": "Slim Orange",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-slim-citron",
+      "nom": "Slim Citron",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "soda-selecto",
+      "nom": "Selecto Original",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "soda-hamoud",
+      "nom": "Hamoud La Blanche",
+      "category_id": "cat-sodas",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "energy-monster-pacific-punch",
+      "nom": "Monster Pacific Punch",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-energy.svg"
+    },
+    {
+      "id": "energy-monster-peachy-keen",
+      "nom": "Monster Ultra Peachy Keen",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-energy.svg"
+    },
+    {
+      "id": "energy-redbull-green",
+      "nom": "Red Bull Green Edition (Cactus)",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-redbull.svg"
+    },
+    {
+      "id": "energy-redbull-yellow",
+      "nom": "Red Bull Yellow Edition (Tropical)",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-redbull.svg"
+    },
+    {
+      "id": "energy-redbull-winter",
+      "nom": "Red Bull Winter Edition",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-redbull.svg"
+    },
+    {
+      "id": "energy-redbull-ice",
+      "nom": "Red Bull Ice Edition",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-redbull.svg"
+    },
+    {
+      "id": "energy-redbull-red",
+      "nom": "Red Bull Red Edition (Pastèque)",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-redbull.svg"
+    },
+    {
+      "id": "energy-redbull-white",
+      "nom": "Red Bull White Edition (Coco-Açaí)",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-redbull.svg"
+    },
+    {
+      "id": "energy-redbull-sea-blue",
+      "nom": "Red Bull Sea Blue Edition (Juneberry)",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-redbull.svg"
+    },
+    {
+      "id": "energy-redbull-apricot",
+      "nom": "Red Bull Apricot Edition",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-redbull.svg"
+    },
+    {
+      "id": "energy-crazy-tiger",
+      "nom": "Crazy Tiger (Canettes & Bouteilles 1L)",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-energy.svg"
+    },
+    {
+      "id": "energy-ciao",
+      "nom": "Ciao Energy (Variété de saveurs)",
+      "category_id": "cat-energy",
+      "image_url": "/products/can-energy.svg"
+    },
+    {
+      "id": "snack-pringles-bbq",
+      "nom": "Pringles Barbecue",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "snack-pringles-sour-cream",
+      "nom": "Pringles Sour Cream & Onion",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "snack-pringles-paprika",
+      "nom": "Pringles Paprika",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "snack-doritos-sweet-chilli",
+      "nom": "Doritos Sweet Chilli Pepper",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-doritos.svg"
+    },
+    {
+      "id": "snack-doritos-dippas",
+      "nom": "Doritos Dippas",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-doritos.svg"
+    },
+    {
+      "id": "snack-doritos-nacho",
+      "nom": "Doritos Nacho Cheese",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-doritos.svg"
+    },
+    {
+      "id": "snack-risi-fromage",
+      "nom": "Risi Match Ball Fromage",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "snack-risi-barbacoa",
+      "nom": "Risi Match Ball Barbacoa",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "snack-risi-ketchup",
+      "nom": "Risi Match Ball Ketchup",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "snack-takis-teriyaki",
+      "nom": "Takis Teriyaki",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-doritos.svg"
+    },
+    {
+      "id": "snack-takis-dracula",
+      "nom": "Takis Dracula",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-doritos.svg"
+    },
+    {
+      "id": "snack-frit-ravich-apetinas",
+      "nom": "Frit Ravich Apetinas",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "snack-frit-ravich-pipas",
+      "nom": "Frit Ravich Pipas Saladas",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "snack-tokapi-cacahuetes",
+      "nom": "Tokapi Cacahuètes Dorées au four",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "snack-benenuts-twinuts",
+      "nom": "Bénénuts Twinuts Saveur Mexicaine",
+      "category_id": "cat-snacks",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "sweet-lu-petit-ecolier",
+      "nom": "LU Véritable Petit Écolier (Chocolat au lait)",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-lu-prince",
+      "nom": "LU Prince Goût Chocolat",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-lu-pepito",
+      "nom": "LU Pépito Croc Sablé",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-mikado",
+      "nom": "Glico Mikado Chocolat au lait",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-savane-pocket",
+      "nom": "Brossard Savane Pocket Chocolat Noir",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-st-michel-galette",
+      "nom": "St Michel La Galette Chocolat Cœur Caramel",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-bonne-maman-quatre-quarts",
+      "nom": "Bonne Maman Le Petit Quatre-quarts Pur Beurre",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-bonne-maman-madeleine",
+      "nom": "Bonne Maman La Madeleine Pur Beurre",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-bonne-maman-madeleine-choco",
+      "nom": "Bonne Maman La Madeleine Nappée Chocolat",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-harrys-choco-mousse",
+      "nom": "Harrys Choco Mousse (x8)",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-baiocchi",
+      "nom": "Mulino Bianco Baiocchi Classici",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-milka-choco-cake",
+      "nom": "Milka Choco & Cake",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-milka-peanut-caramel",
+      "nom": "Milka Peanut Caramel",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-kinder-cookies",
+      "nom": "Kinder Crunchy Cookies",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-kinder-tronky",
+      "nom": "Kinder Tronky",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-kinder-cards",
+      "nom": "Kinder Cards",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-kinder-happy-hippo",
+      "nom": "Kinder Happy Hippo",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-kinder-kinderini",
+      "nom": "Kinder Kinderini",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-kinder-bueno-mini",
+      "nom": "Kinder Bueno Mini",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-kinder-tris",
+      "nom": "Kinder TRIS",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-kinder-schokobons-crispy",
+      "nom": "Kinder Schoko-Bons Crispy",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-nutella-cookies",
+      "nom": "Nutella Cookies",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-carte-noire",
+      "nom": "Moulins de Café Carte Noire",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-carrefour-cafe",
+      "nom": "Carrefour Extra Café",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-nocilla-duo",
+      "nom": "Pâte à tartiner Nocilla Duo",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "sweet-nocilla-original",
+      "nom": "Pâte à tartiner Nocilla Original",
+      "category_id": "cat-confiseries",
+      "image_url": "/products/candy-chocolate.svg"
+    },
+    {
+      "id": "frais-daunat-xxl-thon",
+      "nom": "Daunat XXL Thon Œuf Crudités",
+      "category_id": "cat-frais",
+      "image_url": "/products/fresh-sandwich.svg"
+    },
+    {
+      "id": "frais-daunat-xxl-poulet",
+      "nom": "Daunat XXL Poulet Rôti Mayo",
+      "category_id": "cat-frais",
+      "image_url": "/products/fresh-sandwich.svg"
+    },
+    {
+      "id": "frais-sodebo-cremie-mozza",
+      "nom": "Sōdebo Crémie Emmental & Mozza",
+      "category_id": "cat-frais",
+      "image_url": "/products/fresh-pastabox.svg"
+    },
+    {
+      "id": "frais-sodebo-cremie-thon",
+      "nom": "Sōdebo Crémie Thon & Emmental Râpé",
+      "category_id": "cat-frais",
+      "image_url": "/products/fresh-pastabox.svg"
+    },
+    {
+      "id": "frais-sodebo-pastabox-chevre",
+      "nom": "Sōdebo PastaBox Chèvre (Sauce Tomate)",
+      "category_id": "cat-frais",
+      "image_url": "/products/fresh-pastabox.svg"
+    },
+    {
+      "id": "frais-sodebo-pastabox-saumon",
+      "nom": "Sōdebo PastaBox Saumon (Pointe de Citron)",
+      "category_id": "cat-frais",
+      "image_url": "/products/fresh-pastabox.svg"
+    },
+    {
+      "id": "frais-tiramisu-maison",
+      "nom": "Tiramisus fait maison (Différents parfums)",
+      "category_id": "cat-frais",
+      "image_url": "/products/icecream-tub.svg"
+    },
+    {
+      "id": "frais-caprisun-dragon",
+      "nom": "Capri-Sun Mystic Dragon",
+      "category_id": "cat-frais",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "frais-caprisun-multivitamin",
+      "nom": "Capri-Sun Multivitamin",
+      "category_id": "cat-frais",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "frais-caprisun-multifruits",
+      "nom": "Capri-Sun Multifruits",
+      "category_id": "cat-frais",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "frais-caprisun-mango-passion",
+      "nom": "Capri-Sun Mango & Passion",
+      "category_id": "cat-frais",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "frais-candyup-banane",
+      "nom": "CandyUp Banane",
+      "category_id": "cat-frais",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "frais-candyup-fraise",
+      "nom": "CandyUp Fraise",
+      "category_id": "cat-frais",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "frais-candyup-chocolat",
+      "nom": "CandyUp Chocolat",
+      "category_id": "cat-frais",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "frais-candyup-chococo",
+      "nom": "CandyUp Choco-Coco",
+      "category_id": "cat-frais",
+      "image_url": "/products/can-cola.svg"
+    },
+    {
+      "id": "frais-soda-bouteille-15l",
+      "nom": "Bouteilles Soda Format Familial (Sprite, Pepsi 1.25L/1.5L)",
+      "category_id": "cat-frais",
+      "image_url": "/products/can-citrus.svg"
+    },
+    {
+      "id": "asia-buldak-cheese",
+      "nom": "Samyang Buldak Cheese (Jaune)",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/grocery-noodles.svg"
+    },
+    {
+      "id": "asia-buldak-2x-spicy",
+      "nom": "Samyang Buldak 2x Spicy Hot Chicken (Rouge)",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/grocery-noodles.svg"
+    },
+    {
+      "id": "asia-buldak-jjajang",
+      "nom": "Samyang Buldak Jzzajang / Hot Chicken (Vert)",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/grocery-noodles.svg"
+    },
+    {
+      "id": "asia-yumyum-beef",
+      "nom": "YumYum Beef (Bœuf)",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/grocery-noodles.svg"
+    },
+    {
+      "id": "asia-yumyum-chicken",
+      "nom": "YumYum Chicken (Poulet)",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/grocery-noodles.svg"
+    },
+    {
+      "id": "asia-yumyum-shrimp",
+      "nom": "YumYum Shrimp (Crevette)",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/grocery-noodles.svg"
+    },
+    {
+      "id": "asia-yumyum-cheese",
+      "nom": "YumYum Cheese (Fromage)",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/grocery-noodles.svg"
+    },
+    {
+      "id": "asia-hongdae-topokki",
+      "nom": "Hongdae Original Topokki",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/grocery-noodles.svg"
+    },
+    {
+      "id": "asia-ghost-pepper-cup",
+      "nom": "Ghost Pepper Spicy Black Noodles (Cup)",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/grocery-noodles.svg"
+    },
+    {
+      "id": "asia-baishanzu-shiitake",
+      "nom": "BaiShanZu Crispy Shiitake Bites",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "asia-taokaenoi-algues",
+      "nom": "Tao Kae Noi / Big Roll Algues Croustillantes",
+      "category_id": "cat-asiatique",
+      "image_url": "/products/snack-chips.svg"
+    },
+    {
+      "id": "tech-cable-lightning",
+      "nom": "Câble USB-C vers Lightning (1m)",
+      "category_id": "cat-hightech",
+      "image_url": "/products/tech-cable.svg"
+    },
+    {
+      "id": "tech-adaptateur-20w",
+      "nom": "Adaptateur Secteur USB-C 20W",
+      "category_id": "cat-hightech",
+      "image_url": "/products/tech-charger.svg"
+    },
+    {
+      "id": "tech-cable-usbc",
+      "nom": "Câble de charge USB-C vers USB-C (1m)",
+      "category_id": "cat-hightech",
+      "image_url": "/products/tech-cable.svg"
+    },
+    {
+      "id": "alcool-heineken-33cl",
+      "nom": "Bière Heineken 33cl (5%)",
+      "category_id": "cat-alcool",
+      "image_url": "/products/drink-beer.svg"
+    },
+    {
+      "id": "alcool-vodka-premium",
+      "nom": "Vodka Premium Ice 70cl (37.5%)",
+      "category_id": "cat-alcool",
+      "image_url": "/products/drink-vodka.svg"
+    },
+    {
+      "id": "tabac-marlboro-gold",
+      "nom": "Paquet de Cigarettes Red Light (20 cig.)",
+      "category_id": "cat-tabac",
+      "image_url": "/products/tobacco-pack.svg"
+    },
+    {
+      "id": "tabac-puff-8000",
+      "nom": "Puff Rechargeable 8000 Taffes Fruits Rouges",
+      "category_id": "cat-tabac",
+      "image_url": "/products/tobacco-puff.svg"
+    }
+  ]
+}

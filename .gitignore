@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch / temp generator files
+/scripts/*.png
+/scripts/*.txt
+/scripts/buldak_test/
+test_*.png
+
