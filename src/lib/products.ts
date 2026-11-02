@@ -34,9 +34,19 @@ export async function getProducts(options?: {
   return list;
 }
 
+export const PRODUCT_ID_ALIASES: Record<string, string> = {
+  'prod-monster-strawberry': 'energy-monster-strawberry',
+  'prod-redbull-ruby': 'energy-redbull-ruby',
+  'prod-drpepper-coconut': 'soda-drpepper-coconut',
+  'monster-ultra-strawberry-dreams': 'energy-monster-strawberry',
+  'red-bull-ruby-edition': 'energy-redbull-ruby',
+  'dr-pepper-creamy-coconut': 'soda-drpepper-coconut',
+};
+
 export async function getProductById(id: string): Promise<Product | null> {
   const all = await getProducts();
-  return all.find((p) => p.id === id) || null;
+  const targetId = PRODUCT_ID_ALIASES[id] || id;
+  return all.find((p) => p.id === targetId || p.slug === id || p.id === id) || null;
 }
 
 import { getActiveSettings } from '@/lib/settings-store';

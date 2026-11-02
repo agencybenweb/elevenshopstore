@@ -37,7 +37,7 @@ export interface HeroSlide {
 
 export const heroSlides: HeroSlide[] = [
   {
-    id: 'prod-monster-strawberry',
+    id: 'energy-monster-strawberry',
     productName: 'Monster Ultra Strawberry Dreams',
     tagline: 'Fraise givrée • Zéro sucre',
     description: 'Édition rare importée aux arômes naturels de fraise givrée. Énergie maximale 24h/24.',
@@ -56,11 +56,11 @@ export const heroSlides: HeroSlide[] = [
       { src: '/hero/drop-1.svg', alt: 'Goutte', depth: 0.5, initialX: '28%', initialY: '18%', size: 36, rotation: 12 },
       { src: '/hero/drop-2.svg', alt: 'Goutte', depth: 0.6, initialX: '72%', initialY: '15%', size: 40, rotation: -15 },
     ],
-    priceCents: 280,
+    priceCents: 290,
     slug: 'monster-ultra-strawberry-dreams',
   },
   {
-    id: 'prod-redbull-ruby',
+    id: 'energy-redbull-ruby',
     productName: 'Red Bull Ruby Edition 250ml',
     tagline: 'Fruits rouges & Baies d’açai',
     description: 'Édition spéciale aux fruits rouges rafraîchissants et baies rares. Vitalise corps et esprit.',
@@ -79,11 +79,11 @@ export const heroSlides: HeroSlide[] = [
       { src: '/hero/drop-2.svg', alt: 'Goutte', depth: 0.9, initialX: '24%', initialY: '16%', size: 45, rotation: -20 },
       { src: '/hero/bubble-1.svg', alt: 'Bulle', depth: 0.3, initialX: '80%', initialY: '18%', size: 38, rotation: 0 },
     ],
-    priceCents: 300,
+    priceCents: 320,
     slug: 'red-bull-ruby-edition',
   },
   {
-    id: 'prod-drpepper-coconut',
+    id: 'soda-drpepper-coconut',
     productName: 'Dr Pepper Creamy Coconut',
     tagline: '23 Saveurs • Crème de Coco',
     description: 'Le goût légendaire des 23 saveurs fusionné avec une douce touche de crème de coco exotique.',
@@ -102,7 +102,7 @@ export const heroSlides: HeroSlide[] = [
       { src: '/hero/bubble-2.svg', alt: 'Bulle', depth: 0.5, initialX: '75%', initialY: '16%', size: 36, rotation: 0 },
       { src: '/hero/bubble-1.svg', alt: 'Bulle', depth: 0.3, initialX: '26%', initialY: '18%', size: 32, rotation: 0 },
     ],
-    priceCents: 250,
+    priceCents: 280,
     slug: 'dr-pepper-creamy-coconut',
   },
 ];

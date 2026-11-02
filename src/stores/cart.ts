@@ -15,11 +15,52 @@ export interface CartItem {
 
 const CART_KEY = 'eleven-shop-cart';
 
+export const LEGACY_PRODUCT_ID_MAP: Record<string, string> = {
+  'prod-monster-strawberry': 'energy-monster-strawberry',
+  'prod-redbull-ruby': 'energy-redbull-ruby',
+  'prod-drpepper-coconut': 'soda-drpepper-coconut',
+};
+
+function normalizeCartItem(item: CartItem): CartItem {
+  if (item && item.id && LEGACY_PRODUCT_ID_MAP[item.id]) {
+    return {
+      ...item,
+      id: LEGACY_PRODUCT_ID_MAP[item.id],
+    };
+  }
+  return item;
+}
+
 function loadCart(): CartItem[] {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(CART_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed: CartItem[] = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    // Normalize IDs and merge any duplicates
+    const mergedMap = new Map<string, CartItem>();
+    let changed = false;
+
+    for (const rawItem of parsed) {
+      const item = normalizeCartItem(rawItem);
+      if (item.id !== rawItem.id) changed = true;
+
+      const existing = mergedMap.get(item.id);
+      if (existing) {
+        existing.quantity += item.quantity;
+        changed = true;
+      } else {
+        mergedMap.set(item.id, { ...item });
+      }
+    }
+
+    const result = Array.from(mergedMap.values());
+    if (changed) {
+      saveCart(result);
+    }
+    return result;
   } catch {
     return [];
   }
@@ -80,7 +121,8 @@ export function useCart() {
   }, []);
 
   const addItem = useCallback(
-    (item: Omit<CartItem, 'quantity'>, qty = 1, open = true) => {
+    (rawItem: Omit<CartItem, 'quantity'>, qty = 1, open = true) => {
+      const item = normalizeCartItem(rawItem as CartItem);
       const idx = cartState.findIndex((i) => i.id === item.id);
       if (idx >= 0) {
         cartState[idx].quantity += qty;

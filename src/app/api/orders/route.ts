@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { orderFormSchema, isPostalCodeAllowed } from '@/lib/validation';
-import { getProducts, getStoreSettings } from '@/lib/products';
+import { getProducts, getStoreSettings, PRODUCT_ID_ALIASES } from '@/lib/products';
 import { sendTelegramOrderNotification } from '@/lib/telegram';
 import { getServiceRoleClient, isSupabaseConfigured } from '@/lib/supabase';
 import { saveInMemoryOrder } from '@/lib/orders-store';
@@ -101,13 +101,30 @@ export async function POST(req: NextRequest) {
     // 6. Recalculate ALL prices on the server from database / source of truth
     const allProducts = await getProducts();
     const productMap = new Map(allProducts.map((p) => [p.id, p]));
+    const slugMap = new Map(allProducts.map((p) => [p.slug, p]));
 
     const validatedItems: OrderItem[] = [];
     let subtotalCents = 0;
     let hasAgeRestricted = false;
 
     for (const item of input.items) {
-      const product = productMap.get(item.product_id);
+      let resolvedId = item.product_id;
+      if (PRODUCT_ID_ALIASES[resolvedId]) {
+        resolvedId = PRODUCT_ID_ALIASES[resolvedId];
+      }
+
+      let product = productMap.get(resolvedId) || slugMap.get(resolvedId);
+
+      // Fallback for legacy IDs starting with prod-
+      if (!product && resolvedId.startsWith('prod-')) {
+        const cleanSlug = resolvedId.replace(/^prod-/, '');
+        product =
+          slugMap.get(cleanSlug) ||
+          productMap.get(`energy-${cleanSlug}`) ||
+          productMap.get(`soda-${cleanSlug}`) ||
+          productMap.get(`snack-${cleanSlug}`) ||
+          productMap.get(`candy-${cleanSlug}`);
+      }
 
       if (!product) {
         return NextResponse.json(
