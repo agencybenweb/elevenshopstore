@@ -528,7 +528,7 @@ export default function HeroCarousel() {
 
       {/* ── 7. Central 3D Can + Ellipse Shadow ───── */}
       <div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        className="absolute inset-0 flex items-center justify-center pointer-events-none -translate-y-2 md:translate-y-0"
         style={{ zIndex: 7 }}
       >
         <div
@@ -542,25 +542,17 @@ export default function HeroCarousel() {
             ref={canRef}
             src={slide.image}
             alt={slide.productName}
-            className="hero-can pointer-events-auto cursor-grab active:cursor-grabbing select-none"
+            className="hero-can pointer-events-auto cursor-grab active:cursor-grabbing select-none w-auto object-contain will-change-transform h-[clamp(220px,42vh,330px)] max-w-[72vw] md:h-[clamp(310px,66vh,620px)] md:max-w-[85vw]"
             style={{
-              height: 'clamp(310px, 66vh, 620px)',
-              width: 'auto',
-              maxWidth: '85vw',
-              objectFit: 'contain',
               filter: 'drop-shadow(0 30px 45px rgba(0, 0, 0, 0.45))',
-              willChange: 'transform',
             }}
           />
 
           {/* Ellipse ground shadow beneath the can */}
           <div
             ref={shadowRef}
-            className="pointer-events-none rounded-full"
+            className="pointer-events-none rounded-full w-[clamp(130px,28vw,190px)] md:w-[clamp(180px,35vw,280px)] h-3.5 md:h-6 -mt-2 md:-mt-3"
             style={{
-              width: 'clamp(180px, 35vw, 280px)',
-              height: '24px',
-              marginTop: '-12px',
               background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 72%)',
               filter: 'blur(4px)',
             }}
