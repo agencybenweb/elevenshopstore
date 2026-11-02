@@ -536,7 +536,7 @@ export default function HeroCarousel() {
           className="relative flex flex-col items-center justify-center will-change-transform"
           style={{ transformStyle: 'preserve-3d' }}
         >
-          {/* Can cutout image — 100% transparent PNG */}
+          {/* Can cutout image — supports transparent PNG or dark-bg with screen blend */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={canRef}
@@ -550,6 +550,7 @@ export default function HeroCarousel() {
               objectFit: 'contain',
               filter: 'drop-shadow(0 30px 45px rgba(0, 0, 0, 0.45))',
               willChange: 'transform',
+              mixBlendMode: 'screen',
             }}
           />
 
