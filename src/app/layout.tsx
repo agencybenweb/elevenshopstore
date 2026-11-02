@@ -18,6 +18,16 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: siteConfig.name,
   },
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   other: {
     'theme-color': '#0A0A0A',
   },
