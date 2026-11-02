@@ -465,13 +465,13 @@ export default function HeroCarousel() {
         style={{ zIndex: 5 }}
         aria-hidden="true"
       >
-        {/* Category tag — positioned high above the can for readability */}
+        {/* Category tag — positioned nicely above the can */}
         <div
           ref={tagRef}
-          className="absolute top-[8%] md:top-[9%] px-5 py-2 rounded-full text-[11px] md:text-[13px] font-bold tracking-widest uppercase text-white bg-black/35 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-lg"
-          style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
+          className="absolute top-[18%] md:top-[12%] px-3.5 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold tracking-wider uppercase text-white bg-black/35 backdrop-blur-md border border-white/25 flex items-center gap-1.5 shadow-md"
+          style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
         >
-          <Sparkles className="w-3.5 h-3.5 text-white" />
+          <Sparkles className="w-3 h-3 md:w-3.5 md:h-3.5 text-white/90" />
           <span>{slide.categoryTag}</span>
         </div>
 
