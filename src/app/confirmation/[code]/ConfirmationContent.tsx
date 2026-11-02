@@ -10,6 +10,7 @@ import {
   Truck,
   PackageCheck,
   Phone,
+  PhoneCall,
   Copy,
   Check,
   ShoppingBag,
@@ -21,6 +22,7 @@ import {
   Sparkles,
   Radio,
 } from 'lucide-react';
+import { siteConfig } from '@/config/site';
 
 /* ── Web Audio Chime Synthesizer ─────────── */
 function playStatusChime() {
@@ -526,14 +528,43 @@ export default function ConfirmationContent({
               </div>
             </div>
 
+            {/* ── Mention : Précisions sur les produits à l'unité & Contact ── */}
+            <div className="rounded-3xl border border-primary/25 bg-primary/10 p-5 md:p-6 flex items-start gap-4 shadow-sm backdrop-blur-sm">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/20 text-primary border border-primary/30 mt-0.5 shadow-sm">
+                <PhoneCall className="h-5 w-5" />
+              </div>
+              <div className="space-y-2 text-xs md:text-sm">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-bold text-white text-sm md:text-base">
+                    Précisions sur vos articles &amp; contact épicerie
+                  </h4>
+                  <span className="rounded-full bg-primary/20 border border-primary/30 px-2.5 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wider">
+                    Info commande
+                  </span>
+                </div>
+                <p className="text-text-muted leading-relaxed">
+                  Vous souhaitez apporter une précision sur un article commandé à l&apos;unité (choix d&apos;un parfum, d&apos;une variété ou d&apos;une préférence spécifique) ? Vous pouvez{' '}
+                  <a
+                    href={`tel:${siteConfig.contact.phone.replace(/\s+/g, '')}`}
+                    className="text-primary font-semibold hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>appeler directement l&apos;épicerie au {siteConfig.contact.phone}</span>
+                  </a>.
+                </p>
+                <p className="text-text-muted leading-relaxed">
+                  De même, <strong className="text-white">l&apos;équipe d&apos;Eleven Shop pourra vous joindre par téléphone</strong> sur votre numéro avant l&apos;envoi de la commande pour valider avec vous certains détails sur vos produits à l&apos;unité si nécessaire.
+                </p>
+              </div>
+            </div>
+
             {/* Direct support action */}
             <div className="flex flex-col gap-3 sm:flex-row">
               <a
-                href="tel:0600000000"
-                className="btn-pill btn-pill-outline flex-1 text-center text-sm py-3 flex items-center justify-center gap-2"
+                href={`tel:${siteConfig.contact.phone.replace(/\s+/g, '')}`}
+                className="btn-pill btn-pill-outline flex-1 text-center text-sm py-3 flex items-center justify-center gap-2 hover:border-primary hover:text-primary transition-colors"
               >
                 <Phone className="h-4 w-4" />
-                <span>Appeler l'épicerie Eleven Shop</span>
+                <span>Appeler l&apos;épicerie ({siteConfig.contact.phone})</span>
               </a>
 
               <Link
