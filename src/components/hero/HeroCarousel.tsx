@@ -536,30 +536,22 @@ export default function HeroCarousel() {
           className="relative flex flex-col items-center justify-center will-change-transform"
           style={{ transformStyle: 'preserve-3d' }}
         >
-          {/* Can cutout image — screen blend wrapper (no isolation) + filter on inner img */}
-          <div
+          {/* Can cutout image — 100% transparent PNG */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={canRef}
+            src={slide.image}
+            alt={slide.productName}
+            className="hero-can pointer-events-auto cursor-grab active:cursor-grabbing select-none"
             style={{
-              mixBlendMode: 'screen',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              height: 'clamp(310px, 66vh, 620px)',
+              width: 'auto',
+              maxWidth: '85vw',
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 30px 45px rgba(0, 0, 0, 0.45))',
+              willChange: 'transform',
             }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={canRef}
-              src={slide.image}
-              alt={slide.productName}
-              className="hero-can pointer-events-auto cursor-grab active:cursor-grabbing select-none"
-              style={{
-                height: 'clamp(310px, 66vh, 620px)',
-                width: 'auto',
-                maxWidth: '85vw',
-                objectFit: 'contain',
-                willChange: 'transform',
-              }}
-            />
-          </div>
+          />
 
           {/* Ellipse ground shadow beneath the can */}
           <div
