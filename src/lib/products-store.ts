@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Product } from '@/types/database';
-import { DEMO_PRODUCTS } from '@/lib/demo-data';
+import { DEMO_PRODUCTS, DEMO_CATEGORIES } from '@/lib/demo-data';
 import { getServiceRoleClient, isSupabaseConfigured } from '@/lib/supabase';
 
 // On Vercel / serverless, process.cwd() is read-only (/var/task). /tmp is writable.
@@ -182,12 +182,18 @@ export async function saveProduct(productInput: Partial<Product> & { id?: string
         // Ensure category exists so foreign key constraint never fails
         if (dbPayload.category_id) {
           try {
+            // Look up the proper name from DEMO_CATEGORIES first
+            const knownCat = DEMO_CATEGORIES.find((c) => c.id === dbPayload.category_id);
+            const catSlug = dbPayload.category_id.replace(/^cat-/, '');
+            const catName = knownCat?.name
+              ?? catSlug.charAt(0).toUpperCase() + catSlug.slice(1).replace(/-/g, ' ');
             await client.from('categories').upsert(
               {
                 id: dbPayload.category_id,
-                name: dbPayload.category_id.replace(/^cat-/, '').toUpperCase(),
-                slug: dbPayload.category_id.replace(/^cat-/, ''),
-                sort_order: 99,
+                name: catName,
+                slug: catSlug,
+                sort_order: knownCat?.sort_order ?? 99,
+                icon: knownCat?.icon ?? null,
               },
               { onConflict: 'id' }
             );

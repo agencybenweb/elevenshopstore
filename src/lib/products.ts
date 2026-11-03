@@ -3,6 +3,15 @@ import { DEMO_CATEGORIES, DEMO_PRODUCTS, DEMO_SETTINGS } from '@/lib/demo-data';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { getActiveProductsAsync } from '@/lib/products-store';
 
+/** Normalise le nom d'une catégorie : utilise le vrai nom de DEMO_CATEGORIES si l'ID correspond. */
+function normalizeCategoryName(cat: Category): Category {
+  const known = DEMO_CATEGORIES.find((d) => d.id === cat.id);
+  if (known) return { ...cat, name: known.name, icon: known.icon ?? cat.icon };
+  // Fallback : capitalise la première lettre seulement
+  const normalized = cat.name.charAt(0).toUpperCase() + cat.name.slice(1).toLowerCase();
+  return { ...cat, name: normalized };
+}
+
 export async function getCategories(): Promise<Category[]> {
   if (isSupabaseConfigured && supabase) {
     try {
@@ -11,7 +20,7 @@ export async function getCategories(): Promise<Category[]> {
         .select('*')
         .order('sort_order', { ascending: true });
       if (!error && data && data.length > 0) {
-        return data as Category[];
+        return (data as Category[]).map(normalizeCategoryName);
       }
     } catch {
       // Fallback
