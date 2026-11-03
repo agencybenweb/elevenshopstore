@@ -78,6 +78,56 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
     }
   }
 
+  // ── Livreur annonce son arrivée ──
+  if (data.startsWith('arrive:')) {
+    const code = data.replace('arrive:', '').trim().toUpperCase();
+
+    let order: Order | null = null;
+    let items: OrderItem[] = [];
+
+    if (isSupabaseConfigured) {
+      const client = getServiceRoleClient();
+      if (client) {
+        try {
+          const { data: dbOrder } = await client
+            .from('orders')
+            .update({ status: 'arriving' })
+            .eq('public_code', code)
+            .select('*')
+            .single();
+
+          if (dbOrder) {
+            order = dbOrder as Order;
+            const { data: dbItems } = await client
+              .from('order_items')
+              .select('*')
+              .eq('order_id', dbOrder.id);
+            items = (dbItems as OrderItem[]) || [];
+          }
+        } catch (dbErr) {
+          console.error('[Telegram Handler] Supabase update error:', dbErr);
+        }
+      }
+    }
+
+    if (!order) {
+      order = updateInMemoryOrderStatus(code, 'arriving', driverName);
+      items = order?.items || [];
+    }
+
+    if (order) {
+      if (messageId) {
+        await updateTelegramOrderMessage(messageId, order, items, order.assigned_driver || driverName);
+      }
+      await answerCallbackQuery(callbackId, `🏁 Commande #${code} — ${driverName} est arrivé !`);
+      console.log(`[Telegram Handler] Order #${code} — ${driverName} arrived`);
+      return true;
+    } else {
+      await answerCallbackQuery(callbackId, `Commande #${code} introuvable.`);
+      return false;
+    }
+  }
+
   if (data.startsWith('deliver:')) {
     const code = data.replace('deliver:', '').trim().toUpperCase();
 

@@ -15,6 +15,7 @@ import {
   Check,
   ShoppingBag,
   MapPin,
+  MapPinCheck,
   CreditCard,
   Banknote,
   ArrowRight,
@@ -70,6 +71,12 @@ const STATUS_DESCRIPTIONS: Record<
       'Le livreur est en déplacement vers chez vous. Préparez votre règlement.',
     icon: Truck,
   },
+  arriving: {
+    title: 'Le livreur est arrivé !',
+    subtitle:
+      'Votre livreur est devant votre porte. Préparez-vous à réceptionner votre commande.',
+    icon: MapPinCheck,
+  },
   delivered: {
     title: 'Commande livrée !',
     subtitle:
@@ -110,8 +117,10 @@ export default function ConfirmationContent({
         return 2;
       case 'delivering':
         return 3;
-      case 'delivered':
+      case 'arriving':
         return 4;
+      case 'delivered':
+        return 5;
       default:
         return 1;
     }
@@ -272,23 +281,25 @@ export default function ConfirmationContent({
           {/* Stepper with progress bar */}
           <div className="relative mb-6">
             {/* Background track line */}
-            <div className="absolute top-5 left-[12%] right-[12%] h-1 bg-white/10 -translate-y-1/2 z-0 rounded-full" />
+            <div className="absolute top-5 left-[10%] right-[10%] h-1 bg-white/10 -translate-y-1/2 z-0 rounded-full" />
             {/* Active progress line */}
             <div
-              className="absolute top-5 left-[12%] h-1 bg-primary -translate-y-1/2 z-0 rounded-full transition-all duration-700 ease-out shadow-glow"
+              className="absolute top-5 left-[10%] h-1 bg-primary -translate-y-1/2 z-0 rounded-full transition-all duration-700 ease-out shadow-glow"
               style={{
                 width:
                   currentStep === 1
                     ? '0%'
                     : currentStep === 2
-                    ? '38%'
+                    ? '20%'
                     : currentStep === 3
-                    ? '74%'
-                    : '76%',
+                    ? '40%'
+                    : currentStep === 4
+                    ? '60%'
+                    : '80%',
               }}
             />
 
-            <div className="grid grid-cols-4 gap-2 text-center relative z-10">
+            <div className="grid grid-cols-5 gap-1.5 text-center relative z-10">
               {/* Step 1: Reçue */}
               <div className="flex flex-col items-center">
                 <div
@@ -301,13 +312,13 @@ export default function ConfirmationContent({
                   <Clock className="h-5 w-5" />
                 </div>
                 <span
-                  className={`mt-2 text-[11px] font-semibold ${
+                  className={`mt-2 text-[10px] font-semibold ${
                     currentStep >= 1 ? 'text-white' : 'text-white/40'
                   }`}
                 >
                   Reçue
                 </span>
-                <span className="text-[10px] text-text-muted hidden sm:inline">
+                <span className="text-[9px] text-text-muted hidden sm:inline">
                   Enregistrée
                 </span>
               </div>
@@ -324,13 +335,13 @@ export default function ConfirmationContent({
                   <ShoppingBag className="h-5 w-5" />
                 </div>
                 <span
-                  className={`mt-2 text-[11px] font-semibold ${
+                  className={`mt-2 text-[10px] font-semibold ${
                     currentStep >= 2 ? 'text-white' : 'text-white/40'
                   }`}
                 >
                   Prise en charge
                 </span>
-                <span className="text-[10px] text-text-muted hidden sm:inline">
+                <span className="text-[9px] text-text-muted hidden sm:inline">
                   Par le livreur
                 </span>
               </div>
@@ -347,36 +358,59 @@ export default function ConfirmationContent({
                   <Truck className="h-5 w-5" />
                 </div>
                 <span
-                  className={`mt-2 text-[11px] font-semibold ${
+                  className={`mt-2 text-[10px] font-semibold ${
                     currentStep >= 3 ? 'text-white' : 'text-white/40'
                   }`}
                 >
                   En route
                 </span>
-                <span className="text-[10px] text-text-muted hidden sm:inline">
+                <span className="text-[9px] text-text-muted hidden sm:inline">
                   Vers chez vous
                 </span>
               </div>
 
-              {/* Step 4: Livrée */}
+              {/* Step 4: Arrivé */}
               <div className="flex flex-col items-center">
                 <div
                   className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold transition-all duration-500 ${
                     currentStep >= 4
                       ? 'border-primary bg-primary text-black shadow-glow'
                       : 'border-white/10 bg-white/5 text-white/40'
-                  } ${currentStep === 4 ? 'ring-4 ring-primary/25' : ''}`}
+                  } ${currentStep === 4 ? 'ring-4 ring-primary/25 animate-pulse' : ''}`}
+                >
+                  <MapPinCheck className="h-5 w-5" />
+                </div>
+                <span
+                  className={`mt-2 text-[10px] font-semibold ${
+                    currentStep >= 4 ? 'text-white' : 'text-white/40'
+                  }`}
+                >
+                  Arrivé
+                </span>
+                <span className="text-[9px] text-text-muted hidden sm:inline">
+                  Devant chez vous
+                </span>
+              </div>
+
+              {/* Step 5: Livrée */}
+              <div className="flex flex-col items-center">
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold transition-all duration-500 ${
+                    currentStep >= 5
+                      ? 'border-primary bg-primary text-black shadow-glow'
+                      : 'border-white/10 bg-white/5 text-white/40'
+                  } ${currentStep === 5 ? 'ring-4 ring-primary/25' : ''}`}
                 >
                   <PackageCheck className="h-5 w-5" />
                 </div>
                 <span
-                  className={`mt-2 text-[11px] font-semibold ${
-                    currentStep >= 4 ? 'text-white' : 'text-white/40'
+                  className={`mt-2 text-[10px] font-semibold ${
+                    currentStep >= 5 ? 'text-white' : 'text-white/40'
                   }`}
                 >
                   Livrée
                 </span>
-                <span className="text-[10px] text-text-muted hidden sm:inline">
+                <span className="text-[9px] text-text-muted hidden sm:inline">
                   Bonne dégustation
                 </span>
               </div>
@@ -391,7 +425,8 @@ export default function ConfirmationContent({
                   {currentStep === 1 && <Clock className="h-5 w-5" />}
                   {currentStep === 2 && <ShoppingBag className="h-5 w-5" />}
                   {currentStep === 3 && <Truck className="h-5 w-5 animate-bounce" />}
-                  {currentStep === 4 && <PackageCheck className="h-5 w-5 text-success" />}
+                  {currentStep === 4 && <MapPinCheck className="h-5 w-5 animate-pulse" />}
+                  {currentStep === 5 && <PackageCheck className="h-5 w-5 text-success" />}
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-white">

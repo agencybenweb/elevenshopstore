@@ -33,6 +33,7 @@ export type OrderStatus =
   | 'new'
   | 'taken'
   | 'delivering'
+  | 'arriving'
   | 'delivered'
   | 'cancelled';
 

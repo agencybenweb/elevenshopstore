@@ -46,6 +46,10 @@ export function formatOrderTelegramMessage(
     statusHeader = `🛵 <b>COMMANDE #${order.public_code} PRIS EN CHARGE PAR ${escapeHtml(
       driverName.toUpperCase()
     )}</b>`;
+  } else if (order.status === 'arriving' && driverName) {
+    statusHeader = `🏁 <b>COMMANDE #${order.public_code} — ${escapeHtml(
+      driverName.toUpperCase()
+    )} EST ARRIVÉ</b>`;
   } else if (order.status === 'delivered') {
     statusHeader = `✅ <b>COMMANDE #${order.public_code} LIVRÉE</b>`;
   }
@@ -93,6 +97,19 @@ export function getInlineKeyboard(publicCode: string, status: string, driverName
   }
 
   if (status === 'taken') {
+    return {
+      inline_keyboard: [
+        [
+          {
+            text: `🏁 Je suis arrivé (${driverName || 'Livreur'})`,
+            callback_data: `arrive:${publicCode}`,
+          },
+        ],
+      ],
+    };
+  }
+
+  if (status === 'arriving') {
     return {
       inline_keyboard: [
         [
