@@ -40,6 +40,16 @@ export async function GET(
             ...(dbOrder as Order),
             items: (dbItems as OrderItem[]) || [],
           };
+
+          // Fallback check: if notes contains [ARRIVED] and order is active, map status to arriving
+          if (
+            fullOrder.notes?.includes('[ARRIVED]') &&
+            fullOrder.status !== 'delivered' &&
+            fullOrder.status !== 'cancelled'
+          ) {
+            fullOrder.status = 'arriving';
+          }
+
           return NextResponse.json({ order: fullOrder });
         }
       }

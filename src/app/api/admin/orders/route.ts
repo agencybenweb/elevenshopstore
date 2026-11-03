@@ -25,10 +25,20 @@ export async function GET(req: NextRequest) {
             itemsMap.set(item.order_id, list);
           });
 
-          const ordersWithItems: Order[] = dbOrders.map((o: any) => ({
-            ...o,
-            items: itemsMap.get(o.id) || [],
-          }));
+          const ordersWithItems: Order[] = dbOrders.map((o: any) => {
+            const mappedOrder: Order = {
+              ...o,
+              items: itemsMap.get(o.id) || [],
+            };
+            if (
+              mappedOrder.notes?.includes('[ARRIVED]') &&
+              mappedOrder.status !== 'delivered' &&
+              mappedOrder.status !== 'cancelled'
+            ) {
+              mappedOrder.status = 'arriving';
+            }
+            return mappedOrder;
+          });
 
           return NextResponse.json({ orders: ordersWithItems });
         }

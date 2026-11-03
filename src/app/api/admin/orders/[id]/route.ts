@@ -22,6 +22,55 @@ export async function PATCH(
         if (status) updates.status = status;
         if (assigned_driver !== undefined) updates.assigned_driver = assigned_driver;
 
+        // If status is arriving, try direct update or fallback to notes [ARRIVED]
+        if (status === 'arriving') {
+          const { data, error } = await client
+            .from('orders')
+            .update(updates)
+            .eq('id', id)
+            .select('*')
+            .single();
+
+          if (!error && data) {
+            return NextResponse.json({ success: true, order: data });
+          }
+
+          // Fallback notes check
+          const { data: existing } = await client.from('orders').select('*').eq('id', id).single();
+          if (existing) {
+            const currentNotes = existing.notes || '';
+            const newNotes = currentNotes.includes('[ARRIVED]')
+              ? currentNotes
+              : currentNotes
+              ? `${currentNotes} [ARRIVED]`
+              : '[ARRIVED]';
+
+            const fallbackUpdates: any = { notes: newNotes };
+            if (assigned_driver !== undefined) fallbackUpdates.assigned_driver = assigned_driver;
+
+            const { data: fallbackData } = await client
+              .from('orders')
+              .update(fallbackUpdates)
+              .eq('id', id)
+              .select('*')
+              .single();
+
+            if (fallbackData) {
+              return NextResponse.json({
+                success: true,
+                order: { ...fallbackData, status: 'arriving' },
+              });
+            }
+          }
+        }
+
+        // If status is delivered, clean [ARRIVED] tag
+        if (status === 'delivered') {
+          const { data: existing } = await client.from('orders').select('*').eq('id', id).single();
+          const cleanNotes = (existing?.notes || '').replace('[ARRIVED]', '').trim();
+          updates.notes = cleanNotes;
+        }
+
         const { data, error } = await client
           .from('orders')
           .update(updates)

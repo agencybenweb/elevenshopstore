@@ -78,7 +78,10 @@ ${itemsText}
     text += `\n🏢 <b>Complément :</b> ${escapeHtml(order.address_extra)}`;
   }
   if (order.notes) {
-    text += `\n📝 <b>Remarques :</b> <i>${escapeHtml(order.notes)}</i>`;
+    const cleanNotes = order.notes.replace('[ARRIVED]', '').trim();
+    if (cleanNotes) {
+      text += `\n📝 <b>Remarques :</b> <i>${escapeHtml(cleanNotes)}</i>`;
+    }
   }
 
   return text;

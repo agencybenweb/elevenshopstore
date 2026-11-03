@@ -1069,9 +1069,9 @@ export default function AdminPanel() {
                               Complément : {o.address_extra}
                             </p>
                           )}
-                          {o.notes && (
+                          {o.notes && o.notes.replace('[ARRIVED]', '').trim() && (
                             <p className="rounded-xl bg-black/40 p-2 text-warning/90 mt-1">
-                              Note : {o.notes}
+                              Note : {o.notes.replace('[ARRIVED]', '').trim()}
                             </p>
                           )}
                         </div>

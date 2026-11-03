@@ -104,23 +104,65 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
       const client = getServiceRoleClient();
       if (client) {
         try {
-          const { data: dbOrder } = await client
+          // 1. Fetch existing order to verify it exists and get assigned driver
+          const { data: dbExisting, error: fetchErr } = await client
             .from('orders')
-            .update({ status: 'arriving' })
-            .eq('public_code', code)
             .select('*')
+            .eq('public_code', code)
             .single();
 
-          if (dbOrder) {
-            order = dbOrder as Order;
+          if (dbExisting) {
+            const activeDriver = dbExisting.assigned_driver || driverName;
+
+            // 2. Try direct update to status 'arriving'
+            const { data: dbOrder, error: updateErr } = await client
+              .from('orders')
+              .update({ status: 'arriving', assigned_driver: activeDriver })
+              .eq('public_code', code)
+              .select('*')
+              .single();
+
+            if (!updateErr && dbOrder) {
+              order = dbOrder as Order;
+            } else {
+              // 3. Fallback: if 'arriving' violates check constraint, mark via [ARRIVED] in notes
+              console.warn(
+                '[Telegram Handler] Supabase status arriving rejected by DB check constraint. Using [ARRIVED] notes tag fallback:',
+                updateErr
+              );
+              const currentNotes = dbExisting.notes || '';
+              const newNotes = currentNotes.includes('[ARRIVED]')
+                ? currentNotes
+                : currentNotes
+                ? `${currentNotes} [ARRIVED]`
+                : '[ARRIVED]';
+
+              const { data: fallbackOrder, error: fallbackErr } = await client
+                .from('orders')
+                .update({ notes: newNotes, assigned_driver: activeDriver })
+                .eq('public_code', code)
+                .select('*')
+                .single();
+
+              if (fallbackOrder) {
+                order = { ...(fallbackOrder as Order), status: 'arriving' };
+              } else {
+                console.error('[Telegram Handler] Fallback notes update failed:', fallbackErr);
+                order = { ...(dbExisting as Order), status: 'arriving', assigned_driver: activeDriver };
+              }
+            }
+
+            // 4. Fetch order items for Telegram recap
             const { data: dbItems } = await client
               .from('order_items')
               .select('*')
-              .eq('order_id', dbOrder.id);
+              .eq('order_id', dbExisting.id);
             items = (dbItems as OrderItem[]) || [];
+          } else {
+            console.warn(`[Telegram Handler] Order #${code} not found in Supabase:`, fetchErr);
           }
         } catch (dbErr) {
-          console.error('[Telegram Handler] Supabase update error:', dbErr);
+          console.error('[Telegram Handler] Supabase arrive exception:', dbErr);
         }
       }
     }
@@ -131,11 +173,12 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
     }
 
     if (order) {
+      const driverToDisplay = order.assigned_driver || driverName;
       if (messageId) {
-        await updateTelegramOrderMessage(messageId, order, items, order.assigned_driver || driverName);
+        await updateTelegramOrderMessage(messageId, order, items, driverToDisplay);
       }
-      await answerCallbackQuery(callbackId, `🏁 Commande #${code} — ${driverName} est arrivé !`);
-      console.log(`[Telegram Handler] Order #${code} — ${driverName} arrived`);
+      await answerCallbackQuery(callbackId, `🏁 Commande #${code} — ${driverToDisplay} est arrivé !`);
+      console.log(`[Telegram Handler] Order #${code} — ${driverToDisplay} arrived (status: arriving)`);
       return true;
     } else {
       await answerCallbackQuery(callbackId, `Commande #${code} introuvable.`);
@@ -143,6 +186,7 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
     }
   }
 
+  // ── Livreur annonce la livraison effectuée ──
   if (data.startsWith('deliver:')) {
     const code = data.replace('deliver:', '').trim().toUpperCase();
 
@@ -153,23 +197,37 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
       const client = getServiceRoleClient();
       if (client) {
         try {
-          const { data: dbOrder } = await client
+          const { data: dbExisting } = await client
             .from('orders')
-            .update({ status: 'delivered' })
+            .select('*')
+            .eq('public_code', code)
+            .single();
+
+          const cleanNotes = (dbExisting?.notes || '').replace('[ARRIVED]', '').trim();
+          const activeDriver = dbExisting?.assigned_driver || driverName;
+
+          const { data: dbOrder, error: dbErr } = await client
+            .from('orders')
+            .update({ status: 'delivered', notes: cleanNotes, assigned_driver: activeDriver })
             .eq('public_code', code)
             .select('*')
             .single();
 
-          if (dbOrder) {
+          if (!dbErr && dbOrder) {
             order = dbOrder as Order;
+          } else if (dbExisting) {
+            order = { ...(dbExisting as Order), status: 'delivered', notes: cleanNotes, assigned_driver: activeDriver };
+          }
+
+          if (dbExisting) {
             const { data: dbItems } = await client
               .from('order_items')
               .select('*')
-              .eq('order_id', dbOrder.id);
+              .eq('order_id', dbExisting.id);
             items = (dbItems as OrderItem[]) || [];
           }
         } catch (dbErr) {
-          console.error('[Telegram Handler] Supabase update error:', dbErr);
+          console.error('[Telegram Handler] Supabase deliver error:', dbErr);
         }
       }
     }
@@ -180,11 +238,12 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
     }
 
     if (order) {
+      const driverToDisplay = order.assigned_driver || driverName;
       if (messageId) {
-        await updateTelegramOrderMessage(messageId, order, items, order.assigned_driver || driverName);
+        await updateTelegramOrderMessage(messageId, order, items, driverToDisplay);
       }
       await answerCallbackQuery(callbackId, `✅ Commande #${code} marquée comme livrée !`);
-      console.log(`[Telegram Handler] Order #${code} delivered by ${order.assigned_driver || driverName}`);
+      console.log(`[Telegram Handler] Order #${code} delivered by ${driverToDisplay}`);
       return true;
     } else {
       await answerCallbackQuery(callbackId, `Commande #${code} introuvable.`);
