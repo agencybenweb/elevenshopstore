@@ -39,19 +39,34 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
       const client = getServiceRoleClient();
       if (client) {
         try {
-          const { data: dbOrder } = await client
+          const { data: dbOrder, error: dbErr } = await client
             .from('orders')
-            .update({ status: 'taken', assigned_driver: driverName })
+            .update({ status: 'delivering', assigned_driver: driverName })
             .eq('public_code', code)
             .select('*')
             .single();
 
-          if (dbOrder) {
+          if (dbErr) {
+            console.warn('[Telegram Handler] Supabase claim update error (delivering):', dbErr);
+            // Fallback to 'taken' if DB constraint requires taken
+            const { data: fallbackOrder } = await client
+              .from('orders')
+              .update({ status: 'taken', assigned_driver: driverName })
+              .eq('public_code', code)
+              .select('*')
+              .single();
+            if (fallbackOrder) {
+              order = fallbackOrder as Order;
+            }
+          } else if (dbOrder) {
             order = dbOrder as Order;
+          }
+
+          if (order) {
             const { data: dbItems } = await client
               .from('order_items')
               .select('*')
-              .eq('order_id', dbOrder.id);
+              .eq('order_id', order.id);
             items = (dbItems as OrderItem[]) || [];
           }
         } catch (dbErr) {
@@ -61,7 +76,7 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
     }
 
     if (!order) {
-      order = updateInMemoryOrderStatus(code, 'taken', driverName);
+      order = updateInMemoryOrderStatus(code, 'delivering', driverName);
       items = order?.items || [];
     }
 
@@ -69,8 +84,8 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
       if (messageId) {
         await updateTelegramOrderMessage(messageId, order, items, driverName);
       }
-      await answerCallbackQuery(callbackId, `🛵 Commande #${code} prise en charge par ${driverName} !`);
-      console.log(`[Telegram Handler] Order #${code} taken by ${driverName}`);
+      await answerCallbackQuery(callbackId, `🛵 Commande #${code} prise en charge par ${driverName} — En route !`);
+      console.log(`[Telegram Handler] Order #${code} taken by ${driverName} (status: delivering)`);
       return true;
     } else {
       await answerCallbackQuery(callbackId, `Commande #${code} introuvable.`);

@@ -668,7 +668,7 @@ export default function AdminPanel() {
   // Filter orders
   const filteredOrders = orders.filter((o) => {
     if (ordersFilter === 'new') return o.status === 'new';
-    if (ordersFilter === 'active') return o.status === 'taken' || o.status === 'delivering';
+    if (ordersFilter === 'active') return o.status === 'taken' || o.status === 'delivering' || o.status === 'arriving';
     if (ordersFilter === 'delivered') return o.status === 'delivered';
     return true;
   });
@@ -955,7 +955,7 @@ export default function AdminPanel() {
                       : 'text-white/60 hover:text-white'
                   }`}
                 >
-                  En cours ({orders.filter((o) => o.status === 'taken' || o.status === 'delivering').length})
+                  En cours ({orders.filter((o) => o.status === 'taken' || o.status === 'delivering' || o.status === 'arriving').length})
                 </button>
                 <button
                   onClick={() => setOrdersFilter('delivered')}
@@ -1018,7 +1018,9 @@ export default function AdminPanel() {
                             className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
                               isNew
                                 ? 'bg-secondary/20 text-secondary animate-pulse'
-                                : isTaken
+                                : o.status === 'arriving'
+                                ? 'bg-warning/20 text-warning animate-pulse'
+                                : isTaken || o.status === 'delivering'
                                 ? 'bg-primary/20 text-primary'
                                 : isDelivered
                                 ? 'bg-success/20 text-success'
@@ -1027,10 +1029,10 @@ export default function AdminPanel() {
                           >
                             {o.status === 'new'
                               ? 'NOUVELLE'
-                              : o.status === 'taken'
-                              ? `PRISE (${o.assigned_driver || 'Livreur'})`
-                              : o.status === 'delivering'
-                              ? 'EN ROUTE'
+                              : o.status === 'taken' || o.status === 'delivering'
+                              ? `EN ROUTE (${o.assigned_driver || 'Livreur'})`
+                              : o.status === 'arriving'
+                              ? `ARRIVÉ (${o.assigned_driver || 'Livreur'})`
                               : o.status === 'delivered'
                               ? 'LIVRÉE'
                               : 'ANNULÉE'}
@@ -1098,13 +1100,29 @@ export default function AdminPanel() {
                         <div className="flex gap-2">
                           {o.status === 'new' && (
                             <button
-                              onClick={() => handleUpdateStatus(o.id, 'taken', 'Patron')}
+                              onClick={() => handleUpdateStatus(o.id, 'delivering', 'Patron')}
                               className="btn-pill btn-pill-primary w-full py-2 text-xs font-bold"
                             >
                               🛵 Prendre
                             </button>
                           )}
-                          {o.status === 'taken' && (
+                          {(o.status === 'taken' || o.status === 'delivering') && (
+                            <>
+                              <button
+                                onClick={() => handleUpdateStatus(o.id, 'arriving')}
+                                className="btn-pill bg-warning text-black w-full py-2 text-xs font-bold"
+                              >
+                                🏁 Arrivé
+                              </button>
+                              <button
+                                onClick={() => handleUpdateStatus(o.id, 'delivered')}
+                                className="btn-pill bg-success text-black w-full py-2 text-xs font-bold"
+                              >
+                                ✅ Livrée
+                              </button>
+                            </>
+                          )}
+                          {o.status === 'arriving' && (
                             <button
                               onClick={() => handleUpdateStatus(o.id, 'delivered')}
                               className="btn-pill bg-success text-black w-full py-2 text-xs font-bold"

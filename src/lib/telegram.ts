@@ -42,16 +42,18 @@ export function formatOrderTelegramMessage(
   )}, ${order.postal_code} ${escapeHtml(order.city)}</a>`;
 
   let statusHeader = `🚨 <b>NOUVELLE COMMANDE #${order.public_code}</b>`;
-  if (order.status === 'taken' && driverName) {
-    statusHeader = `🛵 <b>COMMANDE #${order.public_code} PRIS EN CHARGE PAR ${escapeHtml(
+  if ((order.status === 'taken' || order.status === 'delivering') && driverName) {
+    statusHeader = `🛵 <b>COMMANDE #${order.public_code} PRISE EN CHARGE PAR ${escapeHtml(
       driverName.toUpperCase()
-    )}</b>`;
+    )} (EN ROUTE)</b>`;
   } else if (order.status === 'arriving' && driverName) {
     statusHeader = `🏁 <b>COMMANDE #${order.public_code} — ${escapeHtml(
       driverName.toUpperCase()
     )} EST ARRIVÉ</b>`;
   } else if (order.status === 'delivered') {
-    statusHeader = `✅ <b>COMMANDE #${order.public_code} LIVRÉE</b>`;
+    statusHeader = `✅ <b>COMMANDE #${order.public_code} LIVRÉE PAR ${escapeHtml(
+      (driverName || order.assigned_driver || 'LE LIVREUR').toUpperCase()
+    )}</b>`;
   }
 
   let text = `${statusHeader}
@@ -88,7 +90,7 @@ export function getInlineKeyboard(publicCode: string, status: string, driverName
       inline_keyboard: [
         [
           {
-            text: '🛵 Je prends la commande',
+            text: '🛵 Prendre en charge',
             callback_data: `claim:${publicCode}`,
           },
         ],
@@ -96,7 +98,7 @@ export function getInlineKeyboard(publicCode: string, status: string, driverName
     };
   }
 
-  if (status === 'taken') {
+  if (status === 'taken' || status === 'delivering') {
     return {
       inline_keyboard: [
         [

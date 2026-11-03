@@ -49,7 +49,7 @@ create table if not exists orders (
   subtotal_cents integer not null,
   delivery_fee_cents integer not null,
   total_cents integer not null,
-  status text not null check (status in ('new', 'taken', 'delivering', 'delivered', 'cancelled')) default 'new',
+  status text not null check (status in ('new', 'taken', 'delivering', 'arriving', 'delivered', 'cancelled')) default 'new',
   assigned_driver text default null,
   telegram_sent boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
