@@ -8,15 +8,37 @@ import Footer from '@/components/layout/Footer';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: siteConfig.seo.title,
+  metadataBase: new URL('https://www.elevenshop.fr'),
+  title: {
+    default: siteConfig.seo.title,
+    template: '%s | Eleven Shop Roanne',
+  },
   description: siteConfig.seo.description,
   keywords: [...siteConfig.seo.keywords],
+  alternates: {
+    canonical: 'https://www.elevenshop.fr',
+  },
   openGraph: {
     title: siteConfig.seo.title,
     description: siteConfig.seo.description,
-    locale: siteConfig.locale,
+    url: 'https://www.elevenshop.fr',
+    locale: 'fr_FR',
     type: 'website',
     siteName: siteConfig.name,
+    images: [
+      {
+        url: '/icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Eleven Shop — Épicerie de nuit Roanne',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteConfig.seo.title,
+    description: siteConfig.seo.description,
+    images: ['/icon.png'],
   },
   icons: {
     icon: [
@@ -41,22 +63,38 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
-        {/* Schema.org LocalBusiness — SEO local */}
+        {/* Schema.org ConvenienceStore — SEO local enrichi */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
-              '@type': 'LocalBusiness',
+              '@type': 'ConvenienceStore',
               name: siteConfig.name,
-              description: siteConfig.description,
-              url: siteConfig.url,
+              description: siteConfig.seo.description,
+              url: 'https://www.elevenshop.fr',
+              logo: 'https://www.elevenshop.fr/icon.png',
+              image: 'https://www.elevenshop.fr/icon.png',
+              telephone: '+33759843041',
               address: {
                 '@type': 'PostalAddress',
+                streetAddress: '21 rue Anatole France',
                 addressLocality: 'Roanne',
                 postalCode: '42300',
+                addressRegion: 'Loire',
                 addressCountry: 'FR',
               },
+              geo: {
+                '@type': 'GeoCoordinates',
+                latitude: 46.0357,
+                longitude: 4.0734,
+              },
+              areaServed: [
+                { '@type': 'City', name: 'Roanne' },
+                { '@type': 'City', name: 'Riorges' },
+                { '@type': 'City', name: 'Le Coteau' },
+                { '@type': 'City', name: 'Mably' },
+              ],
               openingHoursSpecification: {
                 '@type': 'OpeningHoursSpecification',
                 dayOfWeek: [
@@ -66,7 +104,16 @@ export default function RootLayout({
                 opens: '00:00',
                 closes: '23:59',
               },
+              servesCuisine: 'Épicerie, Boissons, Snacks',
               priceRange: '€',
+              hasOfferCatalog: {
+                '@type': 'OfferCatalog',
+                name: 'Catalogue Eleven Shop',
+                url: 'https://www.elevenshop.fr/catalogue',
+              },
+              sameAs: [
+                'https://elevenshop.fr',
+              ],
             }),
           }}
         />

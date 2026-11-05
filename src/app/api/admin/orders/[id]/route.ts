@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { inMemoryOrders } from '@/lib/orders-store';
 import { getServiceRoleClient, isSupabaseConfigured } from '@/lib/supabase';
 import { OrderStatus } from '@/types/database';
+import { validateAdminRequest } from '@/lib/admin-auth';
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!validateAdminRequest(req)) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await req.json();
     const { status, assigned_driver } = body as {

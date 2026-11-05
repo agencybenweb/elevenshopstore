@@ -3,9 +3,15 @@ import { inMemoryOrders } from '@/lib/orders-store';
 import { getServiceRoleClient, isSupabaseConfigured } from '@/lib/supabase';
 import { Order, OrderItem } from '@/types/database';
 import { checkTelegramUpdates, ensureTelegramPollerStarted } from '@/lib/telegram-poller';
+import { validateAdminRequest } from '@/lib/admin-auth';
 
 export async function GET(req: NextRequest) {
   try {
+    // Vérification de sécurité Admin
+    if (!validateAdminRequest(req)) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
+    }
+
     ensureTelegramPollerStarted();
     await checkTelegramUpdates();
     if (isSupabaseConfigured) {

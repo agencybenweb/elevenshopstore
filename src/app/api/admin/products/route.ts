@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getActiveProductsAsync, saveProduct, deleteProduct } from '@/lib/products-store';
 import { Product } from '@/types/database';
+import { validateAdminRequest } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!validateAdminRequest(req)) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
+    }
+
     const product = (await req.json()) as Partial<Product> & { id?: string };
     const saved = await saveProduct(product);
     return NextResponse.json(
@@ -41,6 +46,10 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    if (!validateAdminRequest(req)) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     let id = searchParams.get('id');
 

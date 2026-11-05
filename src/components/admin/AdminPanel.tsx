@@ -346,10 +346,33 @@ export default function AdminPanel() {
     setAuthPassword('');
   };
 
+  /* ── Auth Headers Helper ─────────────────── */
+  const getAuthToken = useCallback(() => {
+    if (typeof window === 'undefined') return '';
+    return (
+      sessionStorage.getItem('eleven-admin-token') ||
+      localStorage.getItem('eleven-admin-token') ||
+      ''
+    );
+  }, []);
+
+  const getAuthHeaders = useCallback(
+    (extra: Record<string, string> = {}) => {
+      const token = getAuthToken();
+      return {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...extra,
+      };
+    },
+    [getAuthToken]
+  );
+
   /* ── Fetch Data ──────────────────────────── */
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/orders');
+      const res = await fetch('/api/admin/orders', {
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         const newOrders: Order[] = data.orders || [];
@@ -368,11 +391,13 @@ export default function AdminPanel() {
     } catch (err) {
       console.error('Failed to fetch orders:', err);
     }
-  }, [soundEnabled]);
+  }, [soundEnabled, getAuthHeaders]);
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/products');
+      const res = await fetch('/api/admin/products', {
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || []);
@@ -380,11 +405,13 @@ export default function AdminPanel() {
     } catch (err) {
       console.error('Failed to fetch products:', err);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   const fetchSettings = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/settings');
+      const res = await fetch('/api/admin/settings', {
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         setSettings(data.settings);
@@ -392,7 +419,7 @@ export default function AdminPanel() {
     } catch (err) {
       console.error('Failed to fetch settings:', err);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   // Poll orders every 6 seconds for live realtime updates
   useEffect(() => {
@@ -410,7 +437,7 @@ export default function AdminPanel() {
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ status, assigned_driver: driverName }),
       });
       if (res.ok) {
@@ -438,7 +465,7 @@ export default function AdminPanel() {
     try {
       await fetch('/api/admin/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(updated),
       });
       showToast(
@@ -468,7 +495,7 @@ export default function AdminPanel() {
     try {
       const res = await fetch('/api/admin/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(updated),
       });
       if (res.ok) {
@@ -536,6 +563,7 @@ export default function AdminPanel() {
 
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
+        headers: getAuthHeaders(),
         body: formData,
       });
 
@@ -589,7 +617,7 @@ export default function AdminPanel() {
 
       const res = await fetch('/api/admin/products', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),
       });
 
@@ -623,6 +651,7 @@ export default function AdminPanel() {
     try {
       const res = await fetch(`/api/admin/products?id=${targetId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
       if (res.ok) {
         setProducts((prev) => prev.filter((p) => p.id !== targetId));
@@ -644,7 +673,7 @@ export default function AdminPanel() {
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(settings),
       });
       if (res.ok) {

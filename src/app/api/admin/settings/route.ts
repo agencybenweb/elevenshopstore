@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getActiveSettings, updateActiveSettings } from '@/lib/settings-store';
 import { getServiceRoleClient, isSupabaseConfigured } from '@/lib/supabase';
 import { StoreSettings } from '@/types/database';
-
+import { validateAdminRequest } from '@/lib/admin-auth';
 
 export async function GET() {
   try {
@@ -24,6 +24,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!validateAdminRequest(req)) {
+      return NextResponse.json({ error: 'Accès non autorisé' }, { status: 401 });
+    }
+
     const newSettings = (await req.json()) as Partial<StoreSettings>;
 
     if (isSupabaseConfigured) {
