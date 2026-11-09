@@ -72,7 +72,7 @@ export default function VerticalCategoryRail({
       aria-label="Navigation rapide par rayon"
       className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-y-auto no-scrollbar"
       style={{
-        top: '50%',
+        top: 'calc(50% + 40px)',
         transform: 'translateY(-50%)',
         maxHeight: 'calc(100dvh - 24px)',
         background: 'rgba(255, 255, 255, 0.05)',
