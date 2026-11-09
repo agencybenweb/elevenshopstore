@@ -22,6 +22,40 @@ export default function VerticalCategoryRail({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // JS-computed position so the rail is always centred and never clipped by Safari UI chrome
+  const navRef = useRef<HTMLElement>(null);
+  const [navTop, setNavTop] = useState<string>('50%');
+  const [navTransform, setNavTransform] = useState<string>('translateY(-50%)');
+
+  useEffect(() => {
+    const compute = () => {
+      const nav = navRef.current;
+      if (!nav) return;
+      const railH = nav.offsetHeight;
+      const vh = window.innerHeight;
+      const isMob = window.innerWidth < 768;
+      if (isMob) {
+        // Centre vertically, but clamp so bottom never goes outside the screen
+        const ideal = (vh - railH) / 2;
+        const safe = Math.max(10, Math.min(ideal, vh - railH - 16));
+        setNavTop(`${Math.round(safe)}px`);
+        setNavTransform('none');
+      } else {
+        // Desktop: centre at 50 vh (translateY handles offset)
+        setNavTop('50%');
+        setNavTransform('translateY(-50%)');
+      }
+    };
+
+    // Run once after first paint (height is known), then on every resize
+    const t = setTimeout(compute, 0);
+    window.addEventListener('resize', compute);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', compute);
+    };
+  }, []);
+
   // When activeCategory changes (from page scroll), briefly expand the label to announce it
   useEffect(() => {
     setExpandedId(activeCategory);
@@ -69,9 +103,13 @@ export default function VerticalCategoryRail({
 
   return (
     <nav
+      ref={navRef}
       aria-label="Navigation rapide par rayon"
-      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] top-[clamp(260px,32dvh,305px)] md:top-[calc(50vh+40px)] translate-y-0 md:-translate-y-1/2 z-30 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full max-h-[calc(100dvh-32px)] overflow-y-auto no-scrollbar"
+      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-y-auto no-scrollbar"
       style={{
+        top: navTop,
+        transform: navTransform,
+        maxHeight: 'calc(100dvh - 24px)',
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
