@@ -70,11 +70,10 @@ export default function VerticalCategoryRail({
   return (
     <nav
       aria-label="Navigation rapide par rayon"
-      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-y-auto no-scrollbar"
+      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible pointer-events-auto"
       style={{
         top: 'calc(50% + 40px)',
         transform: 'translateY(-50%)',
-        maxHeight: 'calc(100dvh - 24px)',
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
@@ -98,15 +97,15 @@ export default function VerticalCategoryRail({
             {isExpanded && (
               <button
                 onClick={() => handleItemClick(cat.id)}
-                className="absolute right-full mr-3 md:mr-4 flex items-center gap-2 md:gap-3 whitespace-nowrap rounded-full px-3.5 py-1.5 md:px-5 md:py-2.5 text-xs md:text-sm shadow-2xl animate-in fade-in slide-in-from-right-3 duration-200 z-40 cursor-pointer"
+                className="absolute right-full top-1/2 -translate-y-1/2 mr-3 md:mr-4 flex items-center gap-2 md:gap-3 whitespace-nowrap rounded-full px-3.5 py-1.5 md:px-5 md:py-2.5 text-xs md:text-sm shadow-2xl animate-in fade-in slide-in-from-right-3 duration-200 z-50 cursor-pointer pointer-events-auto"
                 style={{
                   background:
-                    'linear-gradient(135deg, rgba(255, 75, 130, 0.35) 0%, rgba(18, 18, 24, 0.82) 60%, rgba(255, 75, 130, 0.20) 100%)',
+                    'linear-gradient(135deg, rgba(255, 75, 130, 0.40) 0%, rgba(18, 18, 24, 0.90) 60%, rgba(255, 75, 130, 0.25) 100%)',
                   backdropFilter: 'blur(24px)',
                   WebkitBackdropFilter: 'blur(24px)',
-                  border: '1px solid rgba(255, 150, 190, 0.45)',
+                  border: '1px solid rgba(255, 150, 190, 0.50)',
                   boxShadow:
-                    'inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45), 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 46, 99, 0.20)',
+                    'inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45), 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 46, 99, 0.25)',
                 }}
               >
                 <span className="text-sm md:text-lg">{cat.icon}</span>

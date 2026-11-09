@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Category, Product, StoreSettings } from '@/types/database';
 import { useCart } from '@/stores/cart';
 import { useSettings } from '@/stores/settings';
@@ -196,6 +196,9 @@ export default function CatalogueView({
   }, [initialCategories, filteredProducts, isAisleMode]);
 
   // Scroll spy: tracks which category section is currently in view
+  const isProgrammaticScrollRef = useRef(false);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!isAisleMode) {
       setActiveCategory(selectedCategory);
@@ -203,12 +206,14 @@ export default function CatalogueView({
     }
 
     const handleScroll = () => {
-      if (window.scrollY < 200) {
+      if (isProgrammaticScrollRef.current) return;
+
+      if (window.scrollY < 180) {
         setActiveCategory('all');
         return;
       }
 
-      const threshold = window.scrollY + 200;
+      const threshold = window.scrollY + 220;
       let current = 'all';
 
       for (const cat of categoriesWithProducts) {
@@ -225,6 +230,12 @@ export default function CatalogueView({
   }, [categoriesWithProducts, isAisleMode, selectedCategory]);
 
   const handleCategorySelect = (catId: string) => {
+    isProgrammaticScrollRef.current = true;
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+    }, 900);
+
     if (catId === 'all') {
       setSelectedCategory('all');
       setActiveCategory('all');
@@ -393,7 +404,7 @@ export default function CatalogueView({
     <div className="min-h-screen pt-24 pb-28 md:pt-28 md:pb-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* ── Page Header ─────────────────────── */}
-        <div className="mb-8">
+        <div className="mb-8 pr-14 sm:pr-16 md:pr-0">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
@@ -428,7 +439,7 @@ export default function CatalogueView({
         </div>
 
         {/* ── Search & Filter Controls ────────── */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pr-14 sm:pr-16 md:pr-20 lg:pr-24">
           {/* Search bar */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
@@ -476,7 +487,7 @@ export default function CatalogueView({
         />
 
         {/* Main Products Container with right padding to breathe next to the rail */}
-        <div className="min-w-0 pr-11 sm:pr-14 md:pr-20 lg:pr-24">
+        <div className="min-w-0 pr-14 sm:pr-16 md:pr-20 lg:pr-24">
           {/* Filter mode pill notice */}
           {selectedCategory !== 'all' && (
             <div className="mb-6 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5">
