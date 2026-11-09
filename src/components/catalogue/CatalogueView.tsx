@@ -317,7 +317,7 @@ export default function CatalogueView({
         </div>
 
         {/* Product Image with Ambient Smoke / Glow */}
-        <div className="relative mx-auto my-3 flex h-32 w-32 items-center justify-center sm:h-44 sm:w-44">
+        <div className="relative mx-auto my-3 flex h-32 w-32 max-w-full items-center justify-center sm:h-44 sm:w-44">
           <div
             className="absolute -inset-1 rounded-full blur-2xl opacity-60 transition-all duration-500 group-hover:scale-115 group-hover:opacity-90 pointer-events-none"
             style={{
@@ -404,7 +404,7 @@ export default function CatalogueView({
     <div className="min-h-screen pt-24 pb-28 md:pt-28 md:pb-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* ── Page Header ─────────────────────── */}
-        <div className="mb-8 pr-14 sm:pr-16 md:pr-0">
+        <div className="mb-8">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
@@ -439,9 +439,9 @@ export default function CatalogueView({
         </div>
 
         {/* ── Search & Filter Controls ────────── */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pr-14 sm:pr-16 md:pr-20 lg:pr-24">
-          {/* Search bar */}
-          <div className="relative flex-1 max-w-md">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search bar (shortened on mobile to stop before the vertical filter rail) */}
+          <div className="relative flex-1 max-w-[calc(100%-48px)] sm:max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
             <input
               type="text"
@@ -486,8 +486,8 @@ export default function CatalogueView({
           productCounts={productCounts}
         />
 
-        {/* Main Products Container with right padding to breathe next to the rail */}
-        <div className="min-w-0 pr-14 sm:pr-16 md:pr-20 lg:pr-24">
+        {/* Main Products Container: 100% full width restored */}
+        <div className="min-w-0">
           {/* Filter mode pill notice */}
           {selectedCategory !== 'all' && (
             <div className="mb-6 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5">
