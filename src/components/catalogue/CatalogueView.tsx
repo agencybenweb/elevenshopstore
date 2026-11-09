@@ -476,7 +476,7 @@ export default function CatalogueView({
         />
 
         {/* Main Products Container with right padding to breathe next to the rail */}
-        <div className="min-w-0 pr-11 sm:pr-14 md:pr-16 lg:pr-16">
+        <div className="min-w-0 pr-11 sm:pr-14 md:pr-20 lg:pr-24">
           {/* Filter mode pill notice */}
           {selectedCategory !== 'all' && (
             <div className="mb-6 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5">

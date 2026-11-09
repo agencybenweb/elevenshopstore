@@ -115,7 +115,7 @@ export default function VerticalCategoryRail({
     <nav
       ref={railRef}
       aria-label="Navigation rapide par rayon"
-      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-1 sm:gap-1.5 p-1 rounded-full max-h-[calc(100dvh-32px)] overflow-y-auto no-scrollbar transition-[top,transform] duration-200 ease-out"
+      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full max-h-[calc(100dvh-32px)] overflow-y-auto no-scrollbar transition-[top,transform] duration-200 ease-out"
       style={{
         top: railTop,
         transform: railTransform,
@@ -142,7 +142,7 @@ export default function VerticalCategoryRail({
             {isExpanded && (
               <button
                 onClick={() => handleItemClick(cat.id)}
-                className="absolute right-full mr-3 flex items-center gap-2 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs shadow-2xl animate-in fade-in slide-in-from-right-3 duration-200 z-40 cursor-pointer"
+                className="absolute right-full mr-3 md:mr-4 flex items-center gap-2 md:gap-3 whitespace-nowrap rounded-full px-3.5 py-1.5 md:px-5 md:py-2.5 text-xs md:text-sm shadow-2xl animate-in fade-in slide-in-from-right-3 duration-200 z-40 cursor-pointer"
                 style={{
                   background:
                     'linear-gradient(135deg, rgba(255, 75, 130, 0.35) 0%, rgba(18, 18, 24, 0.82) 60%, rgba(255, 75, 130, 0.20) 100%)',
@@ -153,10 +153,10 @@ export default function VerticalCategoryRail({
                     'inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45), 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 46, 99, 0.20)',
                 }}
               >
-                <span className="text-sm">{cat.icon}</span>
-                <span className="font-bold tracking-tight text-white">{cat.name}</span>
+                <span className="text-sm md:text-lg">{cat.icon}</span>
+                <span className="font-bold tracking-tight text-white md:text-sm">{cat.name}</span>
                 <span
-                  className="font-mono text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                  className="font-mono text-[10px] md:text-xs px-1.5 py-0.5 md:px-2 md:py-0.5 rounded-full font-bold"
                   style={{
                     background: 'rgba(255, 255, 255, 0.16)',
                     color: '#fff',
@@ -172,7 +172,7 @@ export default function VerticalCategoryRail({
             <button
               onClick={() => handleItemClick(cat.id)}
               aria-label={`Rayon ${cat.name}`}
-              className={`relative flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full text-xs sm:text-sm transition-all duration-300 active:scale-90 cursor-pointer ${
+              className={`relative flex h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 lg:h-11 lg:w-11 items-center justify-center rounded-full text-xs sm:text-sm md:text-lg lg:text-xl transition-all duration-300 active:scale-90 cursor-pointer ${
                 isActive ? 'scale-110' : 'hover:scale-105'
               }`}
               style={
