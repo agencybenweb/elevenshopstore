@@ -22,7 +22,10 @@ export default function VerticalCategoryRail({
   const [activeLabelId, setActiveLabelId] = useState<string | null>(null);
   const [isRetracted, setIsRetracted] = useState<boolean>(false);
 
+  const isRetractedRef = useRef<boolean>(false);
   const retractTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wakeUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHoveredRef = useRef<boolean>(false);
   const isClickActionRef = useRef<boolean>(false);
 
@@ -33,8 +36,28 @@ export default function VerticalCategoryRail({
     );
   };
 
-  // Wakes up the rail (slides it out) on scroll WITHOUT any label, and retracts after 1.5s
-  const wakeUpRail = (fromUserInteraction = false) => {
+  const setRetractedState = (retracted: boolean) => {
+    isRetractedRef.current = retracted;
+    setIsRetracted(retracted);
+  };
+
+  // Schedule auto-retract after 1.5s of no scroll/hover activity
+  const scheduleRetract = () => {
+    if (retractTimerRef.current) {
+      clearTimeout(retractTimerRef.current);
+    }
+    retractTimerRef.current = setTimeout(() => {
+      if (!isHoveredRef.current) {
+        setRetractedState(true);
+        setActiveLabelId(null);
+      }
+    }, 1500);
+  };
+
+  // Called on any scroll, wheel, or touchmove activity
+  // Requirement: Wait 1 second of continuous scroll before making the retracted rail reappear,
+  // so short navigation flicks never obstruct the user's view.
+  const handleScrollActivity = (fromUserInteraction = false) => {
     // If the user physically scrolls with wheel or touch, break out of click-action lock
     if (fromUserInteraction) {
       isClickActionRef.current = false;
@@ -43,52 +66,55 @@ export default function VerticalCategoryRail({
     // During programmatic smooth scroll triggered by click, let the clicked label stay visible for 1.5s
     if (isClickActionRef.current) return;
 
-    // Rail slides into view
-    setIsRetracted(false);
-
-    // Requirement: scrolling brings back the rail WITHOUT any text label
-    setActiveLabelId(null);
-
-    if (retractTimerRef.current) {
-      clearTimeout(retractTimerRef.current);
-    }
-
-    retractTimerRef.current = setTimeout(() => {
-      if (!isHoveredRef.current) {
-        setIsRetracted(true);
-        setActiveLabelId(null);
+    if (isRetractedRef.current) {
+      // ── BAR IS CURRENTLY RETRACTED ──────────────────────────────────────────
+      // Require 1 full second (1000ms) of active scrolling before popping the bar out
+      if (!wakeUpTimerRef.current) {
+        wakeUpTimerRef.current = setTimeout(() => {
+          setRetractedState(false);
+          setActiveLabelId(null); // No text label on scroll
+          wakeUpTimerRef.current = null;
+          scheduleRetract();
+        }, 1000);
       }
-    }, 1500);
+
+      // If the user pauses or stops scrolling for more than 250ms, cancel the 1s wake-up
+      if (scrollStopTimerRef.current) {
+        clearTimeout(scrollStopTimerRef.current);
+      }
+      scrollStopTimerRef.current = setTimeout(() => {
+        if (wakeUpTimerRef.current) {
+          clearTimeout(wakeUpTimerRef.current);
+          wakeUpTimerRef.current = null;
+        }
+      }, 250);
+    } else {
+      // ── BAR IS ALREADY AWAKE & VISIBLE ───────────────────────────────────────
+      // Ensure no text label is shown during scroll
+      setActiveLabelId(null);
+
+      // Refresh the 1.5s auto-retract timer on every scroll tick
+      scheduleRetract();
+    }
   };
 
   // Initial mount: show rail for 1.5s, then automatically retract to the right.
-  // Wheel / scroll / touch: instantly wakes up the rail on both PC & mobile on ANY scroll (up or down)
+  // Wheel / scroll / touch: listens to scroll activity with 1s threshold when retracted
   useEffect(() => {
     // Initial load: show for 1.5s then retract
-    setIsRetracted(false);
+    setRetractedState(false);
     setActiveLabelId(null);
 
     retractTimerRef.current = setTimeout(() => {
       if (!isHoveredRef.current) {
-        setIsRetracted(true);
+        setRetractedState(true);
         setActiveLabelId(null);
       }
     }, 1500);
 
-    // Mouse wheel (up or down) on PC
-    const handleWheel = () => {
-      wakeUpRail(true);
-    };
-
-    // Touch dragging on mobile
-    const handleTouchMove = () => {
-      wakeUpRail(true);
-    };
-
-    // Standard page scroll up/down
-    const handleScroll = () => {
-      wakeUpRail(false);
-    };
+    const handleWheel = () => handleScrollActivity(true);
+    const handleTouchMove = () => handleScrollActivity(true);
+    const handleScroll = () => handleScrollActivity(false);
 
     window.addEventListener('wheel', handleWheel, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
@@ -101,6 +127,8 @@ export default function VerticalCategoryRail({
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('scroll', handleScroll);
       if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+      if (wakeUpTimerRef.current) clearTimeout(wakeUpTimerRef.current);
+      if (scrollStopTimerRef.current) clearTimeout(scrollStopTimerRef.current);
     };
   }, []);
 
@@ -121,9 +149,19 @@ export default function VerticalCategoryRail({
 
   // When user clicks a filter: show ONLY that single label, then at 1.5s hide label AND totally retract rail
   const handleItemClick = (catId: string) => {
+    // Cancel any pending scroll wake-up or stop timers
+    if (wakeUpTimerRef.current) {
+      clearTimeout(wakeUpTimerRef.current);
+      wakeUpTimerRef.current = null;
+    }
+    if (scrollStopTimerRef.current) {
+      clearTimeout(scrollStopTimerRef.current);
+      scrollStopTimerRef.current = null;
+    }
+
     isClickActionRef.current = true;
     isHoveredRef.current = false;
-    setIsRetracted(false);
+    setRetractedState(false);
 
     // Strictly show ONLY the clicked label (replaces any previous one)
     setActiveLabelId(catId);
@@ -136,7 +174,7 @@ export default function VerticalCategoryRail({
     // Exactly 1.5s after click: unconditionally collapse label AND hide rail on all devices
     retractTimerRef.current = setTimeout(() => {
       setActiveLabelId(null);
-      setIsRetracted(true);
+      setRetractedState(true);
       isClickActionRef.current = false;
       isHoveredRef.current = false;
     }, 1500);
@@ -149,7 +187,11 @@ export default function VerticalCategoryRail({
         // Only trigger hover on real mouse devices (never touch taps)
         if (isMouseDevice()) {
           isHoveredRef.current = true;
-          setIsRetracted(false);
+          setRetractedState(false);
+          if (wakeUpTimerRef.current) {
+            clearTimeout(wakeUpTimerRef.current);
+            wakeUpTimerRef.current = null;
+          }
           if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
         }
       }}
@@ -157,11 +199,7 @@ export default function VerticalCategoryRail({
         if (isMouseDevice()) {
           isHoveredRef.current = false;
           setActiveLabelId(null);
-          if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
-          retractTimerRef.current = setTimeout(() => {
-            setIsRetracted(true);
-            setActiveLabelId(null);
-          }, 1500);
+          scheduleRetract();
         }
       }}
       className="fixed z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible"
