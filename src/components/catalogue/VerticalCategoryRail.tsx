@@ -20,20 +20,64 @@ export default function VerticalCategoryRail({
 }: VerticalCategoryRailProps) {
   const [expandedId, setExpandedId] = useState<string | null>(activeCategory);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isRetracted, setIsRetracted] = useState<boolean>(false);
 
-  // When activeCategory changes (from page scroll), briefly expand the label to announce it
+  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retractTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isHoveredRef = useRef<boolean>(false);
+
+  // Wakes up the rail (slides it out) and schedules retract after 1.5s of inactivity
+  const wakeUpRail = () => {
+    setIsRetracted(false);
+
+    if (retractTimerRef.current) {
+      clearTimeout(retractTimerRef.current);
+    }
+
+    retractTimerRef.current = setTimeout(() => {
+      if (!isHoveredRef.current) {
+        setIsRetracted(true);
+        setExpandedId(null);
+      }
+    }, 1500);
+  };
+
+  // Initial mount: show rail for 1.5s, then automatically retract to the right.
+  // Window scroll: instantly wakes up the rail and refreshes the 1.5s timer.
   useEffect(() => {
+    setIsRetracted(false);
+
+    retractTimerRef.current = setTimeout(() => {
+      if (!isHoveredRef.current) {
+        setIsRetracted(true);
+        setExpandedId(null);
+      }
+    }, 1500);
+
+    const handleScroll = () => {
+      wakeUpRail();
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+    };
+  }, []);
+
+  // When activeCategory changes (from page scroll), wake up rail & briefly expand label
+  useEffect(() => {
+    setIsRetracted(false);
     setExpandedId(activeCategory);
 
     if (collapseTimerRef.current) {
       clearTimeout(collapseTimerRef.current);
     }
 
-    // Auto-collapse to emoji-only after 2.5s to keep screen 100% clear
+    // Auto-collapse to emoji-only after 2s to keep screen 100% clear
     collapseTimerRef.current = setTimeout(() => {
       setExpandedId(null);
-    }, 2500);
+    }, 2000);
 
     return () => {
       if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
@@ -56,6 +100,7 @@ export default function VerticalCategoryRail({
   ];
 
   const handleItemClick = (catId: string) => {
+    setIsRetracted(false);
     setExpandedId(catId);
     onSelectCategory(catId);
 
@@ -64,22 +109,56 @@ export default function VerticalCategoryRail({
     }
     collapseTimerRef.current = setTimeout(() => {
       setExpandedId(null);
-    }, 3000);
+    }, 2500);
+
+    // Keep rail awake during category click and transition
+    if (retractTimerRef.current) {
+      clearTimeout(retractTimerRef.current);
+    }
+    retractTimerRef.current = setTimeout(() => {
+      if (!isHoveredRef.current) {
+        setIsRetracted(true);
+        setExpandedId(null);
+      }
+    }, 2500);
   };
 
   return (
     <nav
       aria-label="Navigation rapide par rayon"
-      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible pointer-events-auto"
+      onMouseEnter={() => {
+        isHoveredRef.current = true;
+        setIsRetracted(false);
+        if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+      }}
+      onMouseLeave={() => {
+        isHoveredRef.current = false;
+        setHoveredId(null);
+        if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+        retractTimerRef.current = setTimeout(() => {
+          setIsRetracted(true);
+          setExpandedId(null);
+        }, 1500);
+      }}
+      onClick={() => {
+        if (isRetracted) wakeUpRail();
+      }}
+      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible pointer-events-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer"
       style={{
         top: 'calc(50% + 40px)',
-        transform: 'translateY(-50%)',
+        transform: isRetracted
+          ? 'translateY(-50%) translateX(calc(100% - 12px))'
+          : 'translateY(-50%) translateX(0)',
+        opacity: isRetracted ? 0.7 : 1,
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
-        border: '1px solid rgba(255, 255, 255, 0.18)',
-        boxShadow:
-          '0 12px 36px 0 rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 46, 99, 0.10)',
+        border: isRetracted
+          ? '1px solid rgba(255, 150, 190, 0.45)'
+          : '1px solid rgba(255, 255, 255, 0.18)',
+        boxShadow: isRetracted
+          ? '0 0 16px rgba(255, 46, 99, 0.30), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3)'
+          : '0 12px 36px 0 rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 46, 99, 0.10)',
       }}
     >
       {allCategoriesList.map((cat) => {
