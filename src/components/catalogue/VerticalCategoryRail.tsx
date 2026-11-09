@@ -21,50 +21,6 @@ export default function VerticalCategoryRail({
   const [expandedId, setExpandedId] = useState<string | null>(activeCategory);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const railRef = useRef<HTMLElement>(null);
-
-  // Dynamic vertical position:
-  // Starts at the first category title ("Boissons fraîches & sodas") when at top of page,
-  // then stays locked at the exact visual center between header & bottom when scrolling.
-  const [railTop, setRailTop] = useState<string>('calc(50dvh + 45px)');
-  const [railTransform, setRailTransform] = useState<string>('translateY(-50%)');
-
-  useEffect(() => {
-    const updatePosition = () => {
-      const startEl = document.getElementById('catalogue-categories-start');
-      if (!startEl) return;
-
-      const rect = startEl.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const idealCenterY = vh * 0.5 + 40;
-
-      const railEl = railRef.current;
-      const railHeight = railEl ? railEl.offsetHeight : 330;
-      const idealTop = idealCenterY - railHeight / 2;
-      // Maximum safe top so the bottom of the rail NEVER cuts off or touches the screen bottom
-      const maxSafeTop = vh - railHeight - 20;
-
-      // When the first category title is below idealTop (user at top of page),
-      // align with rect.top but clamp with maxSafeTop so all 10 items stay fully visible!
-      if (rect.top > idealTop) {
-        const safeTop = Math.min(rect.top, maxSafeTop);
-        setRailTop(`${safeTop}px`);
-        setRailTransform('translateY(0)');
-      } else {
-        // Scrolled down into the catalogue: lock at the exact vertical center between header & bottom!
-        setRailTop('calc(50dvh + 45px)');
-        setRailTransform('translateY(-50%)');
-      }
-    };
-
-    updatePosition();
-    window.addEventListener('scroll', updatePosition, { passive: true });
-    window.addEventListener('resize', updatePosition, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', updatePosition);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, []);
 
   // When activeCategory changes (from page scroll), briefly expand the label to announce it
   useEffect(() => {
@@ -113,12 +69,9 @@ export default function VerticalCategoryRail({
 
   return (
     <nav
-      ref={railRef}
       aria-label="Navigation rapide par rayon"
-      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full max-h-[calc(100dvh-32px)] overflow-y-auto no-scrollbar transition-[top,transform] duration-200 ease-out"
+      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] top-[clamp(260px,32dvh,305px)] md:top-[calc(50vh+40px)] translate-y-0 md:-translate-y-1/2 z-30 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full max-h-[calc(100dvh-32px)] overflow-y-auto no-scrollbar"
       style={{
-        top: railTop,
-        transform: railTransform,
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
