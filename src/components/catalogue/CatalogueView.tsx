@@ -439,7 +439,7 @@ export default function CatalogueView({
         </div>
 
         {/* ── Search & Filter Controls ────────── */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:pr-20 lg:pr-24 xl:pr-28">
           {/* Search bar (shortened on mobile to stop before the vertical filter rail) */}
           <div className="relative flex-1 max-w-[calc(100%-48px)] sm:max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
@@ -486,8 +486,8 @@ export default function CatalogueView({
           productCounts={productCounts}
         />
 
-        {/* Main Products Container: 100% full width restored */}
-        <div className="min-w-0">
+        {/* Main Products Container: spacious on mobile (pr-0) with dedicated margin on desktop (md:pr-20 lg:pr-24 xl:pr-28) */}
+        <div className="min-w-0 pr-0 md:pr-20 lg:pr-24 xl:pr-28">
           {/* Filter mode pill notice */}
           {selectedCategory !== 'all' && (
             <div className="mb-6 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5">

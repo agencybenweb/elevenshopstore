@@ -43,7 +43,7 @@ export default function VerticalCategoryRail({
   };
 
   // Initial mount: show rail for 1.5s, then automatically retract to the right.
-  // Window scroll: instantly wakes up the rail and refreshes the 1.5s timer.
+  // Window scroll & mouse near right edge: instantly wakes up the rail and refreshes the 1.5s timer.
   useEffect(() => {
     setIsRetracted(false);
 
@@ -58,9 +58,18 @@ export default function VerticalCategoryRail({
       wakeUpRail();
     };
 
+    // Wake up rail when cursor approaches right edge of screen on PC
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientX >= window.innerWidth - 30) {
+        wakeUpRail();
+      }
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
       if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
     };
   }, []);
@@ -74,10 +83,10 @@ export default function VerticalCategoryRail({
       clearTimeout(collapseTimerRef.current);
     }
 
-    // Auto-collapse to emoji-only after 2s to keep screen 100% clear
+    // Auto-collapse to emoji-only after 1.5s
     collapseTimerRef.current = setTimeout(() => {
       setExpandedId(null);
-    }, 2000);
+    }, 1500);
 
     return () => {
       if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
@@ -107,20 +116,23 @@ export default function VerticalCategoryRail({
     if (collapseTimerRef.current) {
       clearTimeout(collapseTimerRef.current);
     }
-    collapseTimerRef.current = setTimeout(() => {
-      setExpandedId(null);
-    }, 2500);
-
-    // Keep rail awake during category click and transition
     if (retractTimerRef.current) {
       clearTimeout(retractTimerRef.current);
     }
+
+    // At 1.5s after click: collapse label AND totally hide rail to the side
+    collapseTimerRef.current = setTimeout(() => {
+      if (!isHoveredRef.current) {
+        setExpandedId(null);
+      }
+    }, 1500);
+
     retractTimerRef.current = setTimeout(() => {
       if (!isHoveredRef.current) {
         setIsRetracted(true);
         setExpandedId(null);
       }
-    }, 2500);
+    }, 1500);
   };
 
   return (
@@ -140,25 +152,20 @@ export default function VerticalCategoryRail({
           setExpandedId(null);
         }, 1500);
       }}
-      onClick={() => {
-        if (isRetracted) wakeUpRail();
-      }}
-      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible pointer-events-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer"
+      className="fixed right-[10px] sm:right-3 md:right-5 lg:right-6 z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
       style={{
         top: 'calc(50% + 40px)',
         transform: isRetracted
-          ? 'translateY(-50%) translateX(calc(100% - 12px))'
+          ? 'translateY(-50%) translateX(calc(100% + 40px))'
           : 'translateY(-50%) translateX(0)',
-        opacity: isRetracted ? 0.7 : 1,
+        opacity: isRetracted ? 0 : 1,
+        pointerEvents: isRetracted ? 'none' : 'auto',
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
-        border: isRetracted
-          ? '1px solid rgba(255, 150, 190, 0.45)'
-          : '1px solid rgba(255, 255, 255, 0.18)',
-        boxShadow: isRetracted
-          ? '0 0 16px rgba(255, 46, 99, 0.30), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3)'
-          : '0 12px 36px 0 rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 46, 99, 0.10)',
+        border: '1px solid rgba(255, 255, 255, 0.18)',
+        boxShadow:
+          '0 12px 36px 0 rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 46, 99, 0.10)',
       }}
     >
       {allCategoriesList.map((cat) => {
