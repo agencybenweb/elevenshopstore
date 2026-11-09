@@ -36,16 +36,19 @@ export default function VerticalCategoryRail({
 
       const rect = startEl.getBoundingClientRect();
       const vh = window.innerHeight;
-      const idealCenterY = vh * 0.5 + 45;
+      const idealCenterY = vh * 0.5 + 40;
 
       const railEl = railRef.current;
-      const railHeight = railEl ? railEl.offsetHeight : 420;
+      const railHeight = railEl ? railEl.offsetHeight : 330;
       const idealTop = idealCenterY - railHeight / 2;
+      // Maximum safe top so the bottom of the rail NEVER cuts off or touches the screen bottom
+      const maxSafeTop = vh - railHeight - 20;
 
       // When the first category title is below idealTop (user at top of page),
-      // align the top of the rail with rect.top so it starts beside the first category!
+      // align with rect.top but clamp with maxSafeTop so all 10 items stay fully visible!
       if (rect.top > idealTop) {
-        setRailTop(`${rect.top}px`);
+        const safeTop = Math.min(rect.top, maxSafeTop);
+        setRailTop(`${safeTop}px`);
         setRailTransform('translateY(0)');
       } else {
         // Scrolled down into the catalogue: lock at the exact vertical center between header & bottom!
@@ -112,7 +115,7 @@ export default function VerticalCategoryRail({
     <nav
       ref={railRef}
       aria-label="Navigation rapide par rayon"
-      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-1.5 p-1 rounded-full transition-[top,transform] duration-200 ease-out"
+      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-1 sm:gap-1.5 p-1 rounded-full max-h-[calc(100dvh-32px)] overflow-y-auto no-scrollbar transition-[top,transform] duration-200 ease-out"
       style={{
         top: railTop,
         transform: railTransform,
@@ -169,7 +172,7 @@ export default function VerticalCategoryRail({
             <button
               onClick={() => handleItemClick(cat.id)}
               aria-label={`Rayon ${cat.name}`}
-              className={`relative flex h-8 w-8 items-center justify-center rounded-full text-sm transition-all duration-300 active:scale-90 cursor-pointer ${
+              className={`relative flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full text-xs sm:text-sm transition-all duration-300 active:scale-90 cursor-pointer ${
                 isActive ? 'scale-110' : 'hover:scale-105'
               }`}
               style={
