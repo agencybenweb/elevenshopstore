@@ -18,86 +18,91 @@ export default function VerticalCategoryRail({
   onSelectCategory,
   productCounts,
 }: VerticalCategoryRailProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(activeCategory);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  // Strictly ONE single label can EVER be active at a time (from click or PC hover)
+  const [activeLabelId, setActiveLabelId] = useState<string | null>(null);
   const [isRetracted, setIsRetracted] = useState<boolean>(false);
 
-  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retractTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHoveredRef = useRef<boolean>(false);
-  const isClickLockRef = useRef<boolean>(false);
+  const isClickActionRef = useRef<boolean>(false);
 
-  // Wakes up the rail (slides it out) and schedules retract after 1.5s of inactivity
-  const wakeUpRail = () => {
-    if (isClickLockRef.current) return;
+  const isMouseDevice = () => {
+    return (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    );
+  };
 
+  // Wakes up the rail (slides it out) on scroll WITHOUT any label, and retracts after 1.5s
+  const wakeUpRail = (fromUserInteraction = false) => {
+    // If the user physically scrolls with wheel or touch, break out of click-action lock
+    if (fromUserInteraction) {
+      isClickActionRef.current = false;
+    }
+
+    // During programmatic smooth scroll triggered by click, let the clicked label stay visible for 1.5s
+    if (isClickActionRef.current) return;
+
+    // Rail slides into view
     setIsRetracted(false);
+
+    // Requirement: scrolling brings back the rail WITHOUT any text label
+    setActiveLabelId(null);
 
     if (retractTimerRef.current) {
       clearTimeout(retractTimerRef.current);
     }
 
     retractTimerRef.current = setTimeout(() => {
-      if (!isHoveredRef.current && !isClickLockRef.current) {
+      if (!isHoveredRef.current) {
         setIsRetracted(true);
-        setExpandedId(null);
+        setActiveLabelId(null);
       }
     }, 1500);
   };
 
   // Initial mount: show rail for 1.5s, then automatically retract to the right.
-  // Window scroll & mouse near right edge: instantly wakes up the rail and refreshes the 1.5s timer.
+  // Wheel / scroll / touch: instantly wakes up the rail on both PC & mobile on ANY scroll (up or down)
   useEffect(() => {
+    // Initial load: show for 1.5s then retract
     setIsRetracted(false);
+    setActiveLabelId(null);
 
     retractTimerRef.current = setTimeout(() => {
-      if (!isHoveredRef.current && !isClickLockRef.current) {
+      if (!isHoveredRef.current) {
         setIsRetracted(true);
-        setExpandedId(null);
+        setActiveLabelId(null);
       }
     }, 1500);
 
+    // Mouse wheel (up or down) on PC
+    const handleWheel = () => {
+      wakeUpRail(true);
+    };
+
+    // Touch dragging on mobile
+    const handleTouchMove = () => {
+      wakeUpRail(true);
+    };
+
+    // Standard page scroll up/down
     const handleScroll = () => {
-      if (isClickLockRef.current) return;
-      wakeUpRail();
+      wakeUpRail(false);
     };
 
-    // Wake up rail when cursor approaches right edge of screen on PC
-    const handleMouseMove = (e: MouseEvent) => {
-      if (e.clientX >= window.innerWidth - 30) {
-        wakeUpRail();
-      }
-    };
-
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('scroll', handleScroll);
       if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
     };
   }, []);
-
-  // When activeCategory changes (from page scroll), wake up rail & briefly expand label
-  useEffect(() => {
-    if (isClickLockRef.current) return;
-
-    setIsRetracted(false);
-    setExpandedId(activeCategory);
-
-    if (collapseTimerRef.current) {
-      clearTimeout(collapseTimerRef.current);
-    }
-
-    // Auto-collapse to emoji-only after 1.5s
-    collapseTimerRef.current = setTimeout(() => {
-      setExpandedId(null);
-    }, 1500);
-
-    return () => {
-      if (collapseTimerRef.current) clearTimeout(collapseTimerRef.current);
-    };
-  }, [activeCategory]);
 
   const allCategoriesList = [
     {
@@ -114,29 +119,25 @@ export default function VerticalCategoryRail({
     })),
   ];
 
+  // When user clicks a filter: show ONLY that single label, then at 1.5s hide label AND totally retract rail
   const handleItemClick = (catId: string) => {
-    isClickLockRef.current = true;
+    isClickActionRef.current = true;
     isHoveredRef.current = false;
     setIsRetracted(false);
-    setExpandedId(catId);
+
+    // Strictly show ONLY the clicked label (replaces any previous one)
+    setActiveLabelId(catId);
     onSelectCategory(catId);
 
-    if (collapseTimerRef.current) {
-      clearTimeout(collapseTimerRef.current);
-    }
     if (retractTimerRef.current) {
       clearTimeout(retractTimerRef.current);
     }
 
-    // Unconditionally collapse label AND totally hide rail after 1.5s (both mobile & PC)
-    collapseTimerRef.current = setTimeout(() => {
-      setExpandedId(null);
-    }, 1500);
-
+    // Exactly 1.5s after click: unconditionally collapse label AND hide rail on all devices
     retractTimerRef.current = setTimeout(() => {
+      setActiveLabelId(null);
       setIsRetracted(true);
-      setExpandedId(null);
-      isClickLockRef.current = false;
+      isClickActionRef.current = false;
       isHoveredRef.current = false;
     }, 1500);
   };
@@ -145,27 +146,30 @@ export default function VerticalCategoryRail({
     <nav
       aria-label="Navigation rapide par rayon"
       onMouseEnter={() => {
-        // Only trigger hover on real mouse devices, never touch taps
-        if (typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        // Only trigger hover on real mouse devices (never touch taps)
+        if (isMouseDevice()) {
           isHoveredRef.current = true;
           setIsRetracted(false);
           if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
         }
       }}
       onMouseLeave={() => {
-        isHoveredRef.current = false;
-        setHoveredId(null);
-        if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
-        retractTimerRef.current = setTimeout(() => {
-          setIsRetracted(true);
-          setExpandedId(null);
-        }, 1500);
+        if (isMouseDevice()) {
+          isHoveredRef.current = false;
+          setActiveLabelId(null);
+          if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+          retractTimerRef.current = setTimeout(() => {
+            setIsRetracted(true);
+            setActiveLabelId(null);
+          }, 1500);
+        }
       }}
-      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1.25rem,calc((100vw-80rem)/2-4.5rem))] z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+      className="fixed z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
       style={{
         top: 'calc(50% + 40px)',
+        right: 'max(10px, calc((100vw - 80rem) / 2 - 3.5rem))',
         transform: isRetracted
-          ? 'translateY(-50%) translateX(calc(100% + 40px))'
+          ? 'translateY(-50%) translateX(calc(100% + 60px))'
           : 'translateY(-50%) translateX(0)',
         opacity: isRetracted ? 0 : 1,
         pointerEvents: isRetracted ? 'none' : 'auto',
@@ -179,17 +183,26 @@ export default function VerticalCategoryRail({
     >
       {allCategoriesList.map((cat) => {
         const isActive = activeCategory === cat.id;
-        const isExpanded = expandedId === cat.id || hoveredId === cat.id;
+        // Strictly guarantees that max 1 single label can ever be visible at once
+        const isLabelVisible = activeLabelId === cat.id;
 
         return (
           <div
             key={cat.id}
             className="relative flex items-center justify-center"
-            onMouseEnter={() => setHoveredId(cat.id)}
-            onMouseLeave={() => setHoveredId(null)}
+            onMouseEnter={() => {
+              if (isMouseDevice()) {
+                setActiveLabelId(cat.id);
+              }
+            }}
+            onMouseLeave={() => {
+              if (isMouseDevice()) {
+                setActiveLabelId((current) => (current === cat.id ? null : current));
+              }
+            }}
           >
             {/* Expanded text pill popping out to the left (Apple Liquid Glass) */}
-            {isExpanded && (
+            {isLabelVisible && (
               <button
                 onClick={() => handleItemClick(cat.id)}
                 className="absolute right-full top-1/2 -translate-y-1/2 mr-3 md:mr-4 flex items-center gap-2 md:gap-3 whitespace-nowrap rounded-full px-3.5 py-1.5 md:px-5 md:py-2.5 text-xs md:text-sm shadow-2xl animate-in fade-in slide-in-from-right-3 duration-200 z-50 cursor-pointer pointer-events-auto"
@@ -200,10 +213,9 @@ export default function VerticalCategoryRail({
                   WebkitBackdropFilter: 'blur(24px)',
                   border: '1px solid rgba(255, 150, 190, 0.50)',
                   boxShadow:
-                    'inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45), 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 46, 99, 0.25)',
+                    '0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 0 25px rgba(255, 46, 99, 0.35)',
                 }}
               >
-                <span className="text-sm md:text-lg">{cat.icon}</span>
                 <span className="font-bold tracking-tight text-white md:text-sm">{cat.name}</span>
                 <span
                   className="font-mono text-[10px] md:text-xs px-1.5 py-0.5 md:px-2 md:py-0.5 rounded-full font-bold"
