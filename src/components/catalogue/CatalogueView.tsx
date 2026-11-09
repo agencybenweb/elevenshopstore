@@ -466,89 +466,89 @@ export default function CatalogueView({
           </div>
         </div>
 
-        {/* ── Main Layout: Sticky Desktop Sidebar + Products Feed + Floating Mobile Rail ── */}
-        <div className="flex gap-8 items-start">
-          {/* Vertical Category Rail */}
-          <VerticalCategoryRail
-            categories={initialCategories}
-            totalProductsCount={initialProducts.length}
-            activeCategory={activeCategory}
-            onSelectCategory={handleCategorySelect}
-            productCounts={productCounts}
-          />
+        {/* Unified Apple Liquid Glass Vertical Category Rail (Mobile & PC) */}
+        <VerticalCategoryRail
+          categories={initialCategories}
+          totalProductsCount={initialProducts.length}
+          activeCategory={activeCategory}
+          onSelectCategory={handleCategorySelect}
+          productCounts={productCounts}
+        />
 
-          {/* Main Products Container */}
-          <div className="flex-1 min-w-0 pr-10 md:pr-0">
-            {/* Filter mode pill notice */}
-            {selectedCategory !== 'all' && (
-              <div className="mb-6 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5">
-                <div className="flex items-center gap-2 text-xs font-semibold text-white">
-                  <span>Rayon filtré :</span>
-                  <span className="text-primary font-bold">
-                    {initialCategories.find((c) => c.id === selectedCategory)?.name || selectedCategory}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleCategorySelect('all')}
-                  className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-                >
-                  ✕ Voir tout le catalogue
-                </button>
+        {/* Main Products Container with right padding to breathe next to the rail */}
+        <div className="min-w-0 pr-11 sm:pr-14 md:pr-16 lg:pr-16">
+          {/* Filter mode pill notice */}
+          {selectedCategory !== 'all' && (
+            <div className="mb-6 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5">
+              <div className="flex items-center gap-2 text-xs font-semibold text-white">
+                <span>Rayon filtré :</span>
+                <span className="text-primary font-bold">
+                  {initialCategories.find((c) => c.id === selectedCategory)?.name || selectedCategory}
+                </span>
               </div>
-            )}
+              <button
+                onClick={() => handleCategorySelect('all')}
+                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+              >
+                ✕ Voir tout le catalogue
+              </button>
+            </div>
+          )}
 
-            {filteredProducts.length === 0 ? (
-              <div className="rounded-3xl border border-white/5 bg-surface-elevated p-12 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5 text-white/40">
-                  <Search className="h-8 w-8" />
-                </div>
-                <h3 className="font-display text-2xl tracking-wide text-white">
-                  AUCUN PRODUIT TROUVÉ
-                </h3>
-                <p className="mt-2 text-sm text-text-muted">
-                  Aucun résultat ne correspond à votre recherche. Essayez un autre terme ou réinitialisez les filtres.
-                </p>
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    handleCategorySelect('all');
-                  }}
-                  className="btn-pill btn-pill-outline mt-6 text-xs"
+          {/* Reference point: The top of the category products where the rail starts at scroll 0 */}
+          <div id="catalogue-categories-start" className="h-0 w-0 -mt-2" />
+
+          {filteredProducts.length === 0 ? (
+            <div className="rounded-3xl border border-white/5 bg-surface-elevated p-12 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5 text-white/40">
+                <Search className="h-8 w-8" />
+              </div>
+              <h3 className="font-display text-2xl tracking-wide text-white">
+                AUCUN PRODUIT TROUVÉ
+              </h3>
+              <p className="mt-2 text-sm text-text-muted">
+                Aucun résultat ne correspond à votre recherche. Essayez un autre terme ou réinitialisez les filtres.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  handleCategorySelect('all');
+                }}
+                className="btn-pill btn-pill-outline mt-6 text-xs"
+              >
+                Réinitialiser les filtres
+              </button>
+            </div>
+          ) : isAisleMode ? (
+            /* Continuous vertical aisle mode: grouped by category with headers */
+            <div className="space-y-12">
+              {categoriesWithProducts.map((cat) => (
+                <section
+                  key={cat.id}
+                  id={`cat-section-${cat.id}`}
+                  className="scroll-mt-28"
                 >
-                  Réinitialiser les filtres
-                </button>
-              </div>
-            ) : isAisleMode ? (
-              /* Continuous vertical aisle mode: grouped by category with headers */
-              <div className="space-y-12">
-                {categoriesWithProducts.map((cat) => (
-                  <section
-                    key={cat.id}
-                    id={`cat-section-${cat.id}`}
-                    className="scroll-mt-28"
-                  >
-                    <div className="flex items-center gap-2.5 pb-2.5 mb-4 border-b border-white/10">
-                      <span className="text-2xl">{cat.icon}</span>
-                      <h2 className="font-display text-xl tracking-wide text-white uppercase sm:text-2xl">
-                        {cat.name}
-                      </h2>
-                      <span className="text-xs font-mono text-primary font-bold">
-                        ({cat.products.length})
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                      {cat.products.map(renderProductCard)}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            ) : (
-              /* Single category filtered or active search query */
-              <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredProducts.map(renderProductCard)}
-              </div>
-            )}
-          </div>
+                  <div className="flex items-center gap-2.5 pb-2.5 mb-4 border-b border-white/10">
+                    <span className="text-2xl">{cat.icon}</span>
+                    <h2 className="font-display text-xl tracking-wide text-white uppercase sm:text-2xl">
+                      {cat.name}
+                    </h2>
+                    <span className="text-xs font-mono text-primary font-bold">
+                      ({cat.products.length})
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    {cat.products.map(renderProductCard)}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            /* Single category filtered or active search query */
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {filteredProducts.map(renderProductCard)}
+            </div>
+          )}
         </div>
       </div>
 
