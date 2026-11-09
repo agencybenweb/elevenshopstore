@@ -69,8 +69,13 @@ export default function VerticalCategoryRail({
   return (
     <>
       {/* ── DESKTOP SIDEBAR (md:) ───────────────────────── */}
-      {/* Centered vertically in viewport with equal top and bottom margins */}
-      <aside className="hidden md:block w-64 flex-shrink-0 sticky top-1/2 -translate-y-1/2 self-center">
+      {/* Centered vertically in viewport between header and bottom with equal margins */}
+      <aside
+        className="hidden md:block w-64 flex-shrink-0 sticky self-start"
+        style={{
+          top: 'calc(50vh - 190px)',
+        }}
+      >
         <div
           className="rounded-3xl p-3.5 space-y-2 transition-all duration-300"
           style={{
@@ -150,11 +155,13 @@ export default function VerticalCategoryRail({
       </aside>
 
       {/* ── MOBILE FLOATING RAIL (< md:) ──────────────────── */}
-      {/* Centered in the right gutter of the iPhone screen with Apple Liquid Glass aesthetic */}
+      {/* Centered vertically in the visible viewport zone between header and bottom */}
       <nav
         aria-label="Navigation rapide par rayon"
-        className="fixed right-[10px] top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-1.5 p-1 rounded-full md:hidden"
+        className="fixed right-[10px] z-30 flex flex-col items-center gap-1.5 p-1 rounded-full md:hidden"
         style={{
+          top: 'calc(50dvh + 45px)',
+          transform: 'translateY(-50%)',
           background: 'rgba(255, 255, 255, 0.05)',
           backdropFilter: 'blur(28px)',
           WebkitBackdropFilter: 'blur(28px)',
