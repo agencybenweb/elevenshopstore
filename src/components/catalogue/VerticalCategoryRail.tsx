@@ -22,10 +22,11 @@ export default function VerticalCategoryRail({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // JS-computed position so the rail is always centred and never clipped by Safari UI chrome
+  // JS-computed position: on mobile, rail top tracks the first product category section.
+  // On desktop, center at 50 vh.
   const navRef = useRef<HTMLElement>(null);
-  const [navTop, setNavTop] = useState<string>('50%');
-  const [navTransform, setNavTransform] = useState<string>('translateY(-50%)');
+  const [navTop, setNavTop] = useState<string>('-9999px'); // hidden before first compute
+  const [navTransform, setNavTransform] = useState<string>('none');
 
   useEffect(() => {
     const compute = () => {
@@ -33,25 +34,39 @@ export default function VerticalCategoryRail({
       if (!nav) return;
       const railH = nav.offsetHeight;
       const vh = window.innerHeight;
-      const isMob = window.innerWidth < 768;
-      if (isMob) {
-        // Centre vertically, but clamp so bottom never goes outside the screen
-        const ideal = (vh - railH) / 2;
-        const safe = Math.max(10, Math.min(ideal, vh - railH - 16));
-        setNavTop(`${Math.round(safe)}px`);
-        setNavTransform('none');
-      } else {
-        // Desktop: centre at 50 vh (translateY handles offset)
+
+      if (window.innerWidth >= 768) {
+        // Desktop: centre at 50 vh
         setNavTop('50%');
         setNavTransform('translateY(-50%)');
+        return;
       }
+
+      // Mobile: anchor rail top to the first category section in the DOM
+      const startEl = document.getElementById('catalogue-categories-start');
+      let idealTop: number;
+
+      if (startEl) {
+        // getBoundingClientRect gives position relative to viewport (accounts for current scroll)
+        idealTop = startEl.getBoundingClientRect().top;
+      } else {
+        // fallback: 55 % of vh
+        idealTop = vh * 0.55;
+      }
+
+      // Clamp: never start above 8 px from top, never let bottom go off-screen
+      const safeTop = Math.max(8, Math.min(idealTop, vh - railH - 8));
+      setNavTop(`${Math.round(safeTop)}px`);
+      setNavTransform('none');
     };
 
-    // Run once after first paint (height is known), then on every resize
-    const t = setTimeout(compute, 0);
+    // Run after first paint, then track scroll + resize
+    const t = setTimeout(compute, 32);
+    window.addEventListener('scroll', compute, { passive: true });
     window.addEventListener('resize', compute);
     return () => {
       clearTimeout(t);
+      window.removeEventListener('scroll', compute);
       window.removeEventListener('resize', compute);
     };
   }, []);
@@ -109,7 +124,7 @@ export default function VerticalCategoryRail({
       style={{
         top: navTop,
         transform: navTransform,
-        maxHeight: 'calc(100dvh - 24px)',
+        maxHeight: 'calc(100dvh - 16px)',
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
