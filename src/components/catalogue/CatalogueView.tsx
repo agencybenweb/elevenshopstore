@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Category, Product, StoreSettings } from '@/types/database';
 import { useCart } from '@/stores/cart';
 import { useSettings } from '@/stores/settings';
@@ -99,6 +99,8 @@ export default function CatalogueView({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'name'>('featured');
   const [recentAddedId, setRecentAddedId] = useState<string | null>(null);
+  const filterScrollRef = useRef<HTMLDivElement>(null);
+  const hasNudged = useRef(false);
 
   useEffect(() => {
     setProducts(initialProducts);
@@ -135,6 +137,53 @@ export default function CatalogueView({
       }
     }
   }, [products, items, removeItem]);
+
+  // "Nudge" animation: gently scroll the filter bar right then back to hint scrollability
+  useEffect(() => {
+    if (hasNudged.current) return;
+    const el = filterScrollRef.current;
+    if (!el) return;
+
+    // Only nudge if content overflows (there's something to scroll)
+    if (el.scrollWidth <= el.clientWidth) return;
+
+    hasNudged.current = true;
+
+    const delay = setTimeout(() => {
+      const distance = 110;
+      const duration = 420; // ms per direction
+      const fps = 60;
+      const steps = Math.round((duration / 1000) * fps);
+
+      let step = 0;
+      // Ease in-out cubic
+      const ease = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+      // Phase 1: scroll right
+      const scrollRight = setInterval(() => {
+        step++;
+        const t = step / steps;
+        el.scrollLeft = ease(t) * distance;
+        if (step >= steps) {
+          clearInterval(scrollRight);
+          step = 0;
+          // Phase 2: scroll back to 0
+          const startLeft = el.scrollLeft;
+          const scrollBack = setInterval(() => {
+            step++;
+            const t = step / steps;
+            el.scrollLeft = startLeft * (1 - ease(t));
+            if (step >= steps) {
+              clearInterval(scrollBack);
+              el.scrollLeft = 0;
+            }
+          }, 1000 / fps);
+        }
+      }, 1000 / fps);
+    }, 900); // wait 900ms after mount so the page settles
+
+    return () => clearTimeout(delay);
+  }, [initialCategories]);
 
   // Filter & sort products
   const filteredProducts = useMemo(() => {
@@ -273,8 +322,20 @@ export default function CatalogueView({
         </div>
 
         {/* ── Category Pills (Horizontal Scroll) ── */}
-        <div className="mb-8 -mx-4 px-4 overflow-x-auto no-scrollbar sm:mx-0 sm:px-0">
-          <div className="flex items-center gap-2 pb-2">
+        <div className="mb-8 relative">
+          {/* Right fade gradient — visual cue that content continues */}
+          <div
+            className="pointer-events-none absolute right-0 top-0 h-full w-16 z-10"
+            style={{
+              background: 'linear-gradient(to right, transparent, #0A0A0A)',
+            }}
+            aria-hidden="true"
+          />
+          <div
+            ref={filterScrollRef}
+            className="-mx-4 px-4 overflow-x-auto no-scrollbar sm:mx-0 sm:px-0"
+          >
+            <div className="flex items-center gap-2 pb-2">
             <button
               onClick={() => setSelectedCategory('all')}
               className={`flex-shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
@@ -310,6 +371,7 @@ export default function CatalogueView({
                 </button>
               );
             })}
+          </div>
           </div>
         </div>
 
