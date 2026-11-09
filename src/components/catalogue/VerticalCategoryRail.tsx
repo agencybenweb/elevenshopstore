@@ -22,19 +22,14 @@ export default function VerticalCategoryRail({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // JS-computed position: on mobile, rail top tracks the first product category section.
+  // JS-computed position: on mobile, rail top is anchored to the first product category section.
   // On desktop, center at 50 vh.
   const navRef = useRef<HTMLElement>(null);
-  const [navTop, setNavTop] = useState<string>('-9999px'); // hidden before first compute
+  const [navTop, setNavTop] = useState<string>('-9999px'); // hide before first compute
   const [navTransform, setNavTransform] = useState<string>('none');
 
   useEffect(() => {
     const compute = () => {
-      const nav = navRef.current;
-      if (!nav) return;
-      const railH = nav.offsetHeight;
-      const vh = window.innerHeight;
-
       if (window.innerWidth >= 768) {
         // Desktop: centre at 50 vh
         setNavTop('50%');
@@ -42,26 +37,32 @@ export default function VerticalCategoryRail({
         return;
       }
 
-      // Mobile: anchor rail top to the first category section in the DOM
-      const startEl = document.getElementById('catalogue-categories-start');
-      let idealTop: number;
+      // Mobile: anchor rail TOP to the first category section heading in the DOM.
+      // Priority 1: first [id^="cat-section-"] element (the actual "BOISSONS FRAÎCHES…" heading)
+      // Priority 2: #catalogue-categories-start anchor div
+      const firstSection =
+        (document.querySelector('[id^="cat-section-"]') as HTMLElement) ??
+        (document.getElementById('catalogue-categories-start') as HTMLElement);
 
-      if (startEl) {
-        // getBoundingClientRect gives position relative to viewport (accounts for current scroll)
-        idealTop = startEl.getBoundingClientRect().top;
+      let idealTop: number;
+      if (firstSection) {
+        idealTop = firstSection.getBoundingClientRect().top;
       } else {
-        // fallback: 55 % of vh
-        idealTop = vh * 0.55;
+        // Fallback: 55 % of viewport height
+        idealTop = window.innerHeight * 0.55;
       }
 
-      // Clamp: never start above 8 px from top, never let bottom go off-screen
-      const safeTop = Math.max(8, Math.min(idealTop, vh - railH - 8));
+      // Only prevent rail from going above 8 px from top of viewport.
+      // We deliberately DO NOT clamp the bottom – the last emoji may be
+      // slightly clipped at scroll=0, but becomes fully visible as the
+      // user scrolls (the section heading moves up and so does the rail).
+      const safeTop = Math.max(8, idealTop);
       setNavTop(`${Math.round(safeTop)}px`);
       setNavTransform('none');
     };
 
-    // Run after first paint, then track scroll + resize
-    const t = setTimeout(compute, 32);
+    // Run after first paint (layout is complete), then track scroll + resize
+    const t = setTimeout(compute, 50);
     window.addEventListener('scroll', compute, { passive: true });
     window.addEventListener('resize', compute);
     return () => {
@@ -120,7 +121,7 @@ export default function VerticalCategoryRail({
     <nav
       ref={navRef}
       aria-label="Navigation rapide par rayon"
-      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-y-auto no-scrollbar"
+      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1rem,calc((100vw-80rem)/2+1.5rem))] z-30 flex flex-col items-center gap-[3px] sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-y-auto no-scrollbar"
       style={{
         top: navTop,
         transform: navTransform,
@@ -178,7 +179,7 @@ export default function VerticalCategoryRail({
             <button
               onClick={() => handleItemClick(cat.id)}
               aria-label={`Rayon ${cat.name}`}
-              className={`relative flex h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 lg:h-11 lg:w-11 items-center justify-center rounded-full text-xs sm:text-sm md:text-lg lg:text-xl transition-all duration-300 active:scale-90 cursor-pointer ${
+              className={`relative flex h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 lg:h-11 lg:w-11 items-center justify-center rounded-full text-sm sm:text-sm md:text-lg lg:text-xl transition-all duration-300 active:scale-90 cursor-pointer ${
                 isActive ? 'scale-110' : 'hover:scale-105'
               }`}
               style={
