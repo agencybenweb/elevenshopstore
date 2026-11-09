@@ -164,15 +164,19 @@ export default function VerticalCategoryRail({
           }, 1500);
         }
       }}
-      className="fixed z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+      className="fixed z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible"
       style={{
         top: 'calc(50% + 40px)',
         right: 'max(10px, calc((100vw - 80rem) / 2 - 3.5rem))',
         transform: isRetracted
-          ? 'translateY(-50%) translateX(calc(100% + 60px))'
-          : 'translateY(-50%) translateX(0)',
+          ? 'translate3d(calc(100% + 60px), -50%, 0)'
+          : 'translate3d(0, -50%, 0)',
         opacity: isRetracted ? 0 : 1,
         pointerEvents: isRetracted ? 'none' : 'auto',
+        willChange: 'transform, opacity',
+        transition: isRetracted
+          ? 'transform 520ms cubic-bezier(0.32, 0, 0.2, 1), opacity 350ms ease-in 100ms'
+          : 'transform 500ms cubic-bezier(0.16, 1, 0.3, 1), opacity 250ms ease-out',
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
@@ -201,34 +205,36 @@ export default function VerticalCategoryRail({
               }
             }}
           >
-            {/* Expanded text pill popping out to the left (Apple Liquid Glass) */}
-            {isLabelVisible && (
-              <button
-                onClick={() => handleItemClick(cat.id)}
-                className="absolute right-full top-1/2 -translate-y-1/2 mr-3 md:mr-4 flex items-center gap-2 md:gap-3 whitespace-nowrap rounded-full px-3.5 py-1.5 md:px-5 md:py-2.5 text-xs md:text-sm shadow-2xl animate-in fade-in slide-in-from-right-3 duration-200 z-50 cursor-pointer pointer-events-auto"
+            {/* Expanded text pill popping out to the left with smooth fluid entry/exit */}
+            <button
+              onClick={() => handleItemClick(cat.id)}
+              className={`absolute right-full top-1/2 -translate-y-1/2 mr-3 md:mr-4 flex items-center gap-2 md:gap-3 whitespace-nowrap rounded-full px-3.5 py-1.5 md:px-5 md:py-2.5 text-xs md:text-sm shadow-2xl z-50 cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                isLabelVisible
+                  ? 'opacity-100 translate-x-0 scale-100 pointer-events-auto'
+                  : 'opacity-0 translate-x-3 scale-95 pointer-events-none'
+              }`}
+              style={{
+                background:
+                  'linear-gradient(135deg, rgba(255, 75, 130, 0.40) 0%, rgba(18, 18, 24, 0.90) 60%, rgba(255, 75, 130, 0.25) 100%)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                border: '1px solid rgba(255, 150, 190, 0.50)',
+                boxShadow:
+                  '0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 0 25px rgba(255, 46, 99, 0.35)',
+              }}
+            >
+              <span className="font-bold tracking-tight text-white md:text-sm">{cat.name}</span>
+              <span
+                className="font-mono text-[10px] md:text-xs px-1.5 py-0.5 md:px-2 md:py-0.5 rounded-full font-bold"
                 style={{
-                  background:
-                    'linear-gradient(135deg, rgba(255, 75, 130, 0.40) 0%, rgba(18, 18, 24, 0.90) 60%, rgba(255, 75, 130, 0.25) 100%)',
-                  backdropFilter: 'blur(24px)',
-                  WebkitBackdropFilter: 'blur(24px)',
-                  border: '1px solid rgba(255, 150, 190, 0.50)',
-                  boxShadow:
-                    '0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 0 25px rgba(255, 46, 99, 0.35)',
+                  background: 'rgba(255, 255, 255, 0.16)',
+                  color: '#fff',
+                  border: '1px solid rgba(255, 255, 255, 0.22)',
                 }}
               >
-                <span className="font-bold tracking-tight text-white md:text-sm">{cat.name}</span>
-                <span
-                  className="font-mono text-[10px] md:text-xs px-1.5 py-0.5 md:px-2 md:py-0.5 rounded-full font-bold"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.16)',
-                    color: '#fff',
-                    border: '1px solid rgba(255, 255, 255, 0.22)',
-                  }}
-                >
-                  {cat.count}
-                </span>
-              </button>
-            )}
+                {cat.count}
+              </span>
+            </button>
 
             {/* Compact Apple Liquid Glass emoji circle button */}
             <button
