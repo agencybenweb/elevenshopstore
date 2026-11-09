@@ -100,7 +100,6 @@ export default function CatalogueView({
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'name'>('featured');
   const [recentAddedId, setRecentAddedId] = useState<string | null>(null);
   const filterScrollRef = useRef<HTMLDivElement>(null);
-  const hasNudged = useRef(false);
 
   useEffect(() => {
     setProducts(initialProducts);
@@ -138,51 +137,90 @@ export default function CatalogueView({
     }
   }, [products, items, removeItem]);
 
-  // "Nudge" animation: gently scroll the filter bar right then back to hint scrollability
+  // "Nudge" animation: gently scroll the filter bar right then back to hint scrollability.
+  // Repeats every 2s until the user touches/scrolls the bar themselves.
   useEffect(() => {
-    if (hasNudged.current) return;
     const el = filterScrollRef.current;
     if (!el) return;
 
     // Only nudge if content overflows (there's something to scroll)
     if (el.scrollWidth <= el.clientWidth) return;
 
-    hasNudged.current = true;
+    let stopped = false;
+    let repeatTimer: ReturnType<typeof setTimeout> | null = null;
+    let currentAnimFrames: ReturnType<typeof setInterval>[] = [];
 
-    const delay = setTimeout(() => {
+    const stopNudging = () => {
+      if (stopped) return;
+      stopped = true;
+      if (repeatTimer) clearTimeout(repeatTimer);
+      currentAnimFrames.forEach(clearInterval);
+    };
+
+    const ease = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+    const runNudge = () => {
+      if (stopped) return;
+
+      // Don't nudge if user has already manually scrolled
+      if (el.scrollLeft > 0) {
+        stopNudging();
+        return;
+      }
+
       const distance = 110;
-      const duration = 420; // ms per direction
+      const duration = 400; // ms per direction
       const fps = 60;
       const steps = Math.round((duration / 1000) * fps);
-
       let step = 0;
-      // Ease in-out cubic
-      const ease = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
 
       // Phase 1: scroll right
       const scrollRight = setInterval(() => {
+        if (stopped) { clearInterval(scrollRight); return; }
         step++;
-        const t = step / steps;
-        el.scrollLeft = ease(t) * distance;
+        el.scrollLeft = ease(step / steps) * distance;
         if (step >= steps) {
           clearInterval(scrollRight);
           step = 0;
-          // Phase 2: scroll back to 0
           const startLeft = el.scrollLeft;
+
+          // Phase 2: scroll back to 0
           const scrollBack = setInterval(() => {
+            if (stopped) { clearInterval(scrollBack); return; }
             step++;
-            const t = step / steps;
-            el.scrollLeft = startLeft * (1 - ease(t));
+            el.scrollLeft = startLeft * (1 - ease(step / steps));
             if (step >= steps) {
               clearInterval(scrollBack);
               el.scrollLeft = 0;
+
+              // Schedule next nudge in 2s if user still hasn't scrolled
+              if (!stopped) {
+                repeatTimer = setTimeout(runNudge, 2000);
+              }
             }
           }, 1000 / fps);
+
+          currentAnimFrames = [scrollBack];
         }
       }, 1000 / fps);
-    }, 900); // wait 900ms after mount so the page settles
 
-    return () => clearTimeout(delay);
+      currentAnimFrames = [scrollRight];
+    };
+
+    // Stop nudging as soon as the user touches or scrolls the bar
+    el.addEventListener('scroll', stopNudging, { once: true, passive: true });
+    el.addEventListener('touchstart', stopNudging, { once: true, passive: true });
+    el.addEventListener('mousedown', stopNudging, { once: true });
+
+    // First nudge after 900ms so the page settles
+    repeatTimer = setTimeout(runNudge, 900);
+
+    return () => {
+      stopNudging();
+      el.removeEventListener('scroll', stopNudging);
+      el.removeEventListener('touchstart', stopNudging);
+      el.removeEventListener('mousedown', stopNudging);
+    };
   }, [initialCategories]);
 
   // Filter & sort products
