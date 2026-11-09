@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
 import { Category, Product, StoreSettings } from '@/types/database';
 import { useCart } from '@/stores/cart';
 import { useSettings } from '@/stores/settings';
@@ -143,85 +144,90 @@ export default function CatalogueView({
     const el = filterScrollRef.current;
     if (!el) return;
 
-    // Only nudge if content overflows (there's something to scroll)
-    if (el.scrollWidth <= el.clientWidth) return;
-
-    let stopped = false;
+    let killed = false;
+    let isAnimating = false;
+    let tween: gsap.core.Tween | null = null;
     let repeatTimer: ReturnType<typeof setTimeout> | null = null;
-    let currentAnimFrames: ReturnType<typeof setInterval>[] = [];
 
     const stopNudging = () => {
-      if (stopped) return;
-      stopped = true;
+      if (killed) return;
+      killed = true;
       if (repeatTimer) clearTimeout(repeatTimer);
-      currentAnimFrames.forEach(clearInterval);
+      if (tween) {
+        tween.kill();
+        tween = null;
+      }
+      isAnimating = false;
     };
 
-    const ease = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    const onUserInteraction = () => {
+      stopNudging();
+    };
+
+    const onUserScroll = () => {
+      // Only stop if the user manually scrolled (not our GSAP programmatic update)
+      if (!isAnimating && el.scrollLeft > 2) {
+        stopNudging();
+      }
+    };
 
     const runNudge = () => {
-      if (stopped) return;
+      if (killed || !el) return;
 
-      // Don't nudge if user has already manually scrolled
-      if (el.scrollLeft > 0) {
+      // Only nudge if content overflows (there's something to scroll)
+      if (el.scrollWidth <= el.clientWidth) return;
+
+      // Don't nudge if user has already scrolled
+      if (el.scrollLeft > 2) {
         stopNudging();
         return;
       }
 
-      const distance = 110;
-      const duration = 400; // ms per direction
-      const fps = 60;
-      const steps = Math.round((duration / 1000) * fps);
-      let step = 0;
+      isAnimating = true;
+      const proxy = { x: 0 };
+      const distance = 120; // 120px to show 1-2 categories nicely
 
-      // Phase 1: scroll right
-      const scrollRight = setInterval(() => {
-        if (stopped) { clearInterval(scrollRight); return; }
-        step++;
-        el.scrollLeft = ease(step / steps) * distance;
-        if (step >= steps) {
-          clearInterval(scrollRight);
-          step = 0;
-          const startLeft = el.scrollLeft;
+      tween = gsap.to(proxy, {
+        x: distance,
+        duration: 0.55,
+        ease: 'power2.inOut',
+        yoyo: true,
+        repeat: 1,
+        repeatDelay: 0.15,
+        onUpdate: () => {
+          if (!killed && el) {
+            el.scrollLeft = proxy.x;
+          }
+        },
+        onComplete: () => {
+          if (killed) return;
+          if (el) el.scrollLeft = 0;
+          setTimeout(() => {
+            isAnimating = false;
+          }, 80);
 
-          // Phase 2: scroll back to 0
-          const scrollBack = setInterval(() => {
-            if (stopped) { clearInterval(scrollBack); return; }
-            step++;
-            el.scrollLeft = startLeft * (1 - ease(step / steps));
-            if (step >= steps) {
-              clearInterval(scrollBack);
-              el.scrollLeft = 0;
-
-              // Schedule next nudge in 2s if user still hasn't scrolled
-              if (!stopped) {
-                repeatTimer = setTimeout(runNudge, 2000);
-              }
-            }
-          }, 1000 / fps);
-
-          currentAnimFrames = [scrollBack];
-        }
-      }, 1000 / fps);
-
-      currentAnimFrames = [scrollRight];
+          // Re-trigger every 2s until user interacts
+          repeatTimer = setTimeout(runNudge, 2000);
+        },
+      });
     };
 
-    // Stop nudging as soon as the user touches or scrolls the bar
-    el.addEventListener('scroll', stopNudging, { once: true, passive: true });
-    el.addEventListener('touchstart', stopNudging, { once: true, passive: true });
-    el.addEventListener('mousedown', stopNudging, { once: true });
+    el.addEventListener('touchstart', onUserInteraction, { passive: true });
+    el.addEventListener('pointerdown', onUserInteraction, { passive: true });
+    el.addEventListener('wheel', onUserInteraction, { passive: true });
+    el.addEventListener('scroll', onUserScroll, { passive: true });
 
-    // First nudge after 900ms so the page settles
-    repeatTimer = setTimeout(runNudge, 900);
+    // Initial nudge after 800ms
+    repeatTimer = setTimeout(runNudge, 800);
 
     return () => {
       stopNudging();
-      el.removeEventListener('scroll', stopNudging);
-      el.removeEventListener('touchstart', stopNudging);
-      el.removeEventListener('mousedown', stopNudging);
+      el.removeEventListener('touchstart', onUserInteraction);
+      el.removeEventListener('pointerdown', onUserInteraction);
+      el.removeEventListener('wheel', onUserInteraction);
+      el.removeEventListener('scroll', onUserScroll);
     };
-  }, [initialCategories]);
+  }, []);
 
   // Filter & sort products
   const filteredProducts = useMemo(() => {

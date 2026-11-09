@@ -46,4 +46,5 @@ next-env.d.ts
 /scripts/*.txt
 /scripts/buldak_test/
 test_*.png
+supabase/.temp/
 
