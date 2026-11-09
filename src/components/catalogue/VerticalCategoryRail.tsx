@@ -25,9 +25,12 @@ export default function VerticalCategoryRail({
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retractTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHoveredRef = useRef<boolean>(false);
+  const isClickLockRef = useRef<boolean>(false);
 
   // Wakes up the rail (slides it out) and schedules retract after 1.5s of inactivity
   const wakeUpRail = () => {
+    if (isClickLockRef.current) return;
+
     setIsRetracted(false);
 
     if (retractTimerRef.current) {
@@ -35,7 +38,7 @@ export default function VerticalCategoryRail({
     }
 
     retractTimerRef.current = setTimeout(() => {
-      if (!isHoveredRef.current) {
+      if (!isHoveredRef.current && !isClickLockRef.current) {
         setIsRetracted(true);
         setExpandedId(null);
       }
@@ -48,13 +51,14 @@ export default function VerticalCategoryRail({
     setIsRetracted(false);
 
     retractTimerRef.current = setTimeout(() => {
-      if (!isHoveredRef.current) {
+      if (!isHoveredRef.current && !isClickLockRef.current) {
         setIsRetracted(true);
         setExpandedId(null);
       }
     }, 1500);
 
     const handleScroll = () => {
+      if (isClickLockRef.current) return;
       wakeUpRail();
     };
 
@@ -76,6 +80,8 @@ export default function VerticalCategoryRail({
 
   // When activeCategory changes (from page scroll), wake up rail & briefly expand label
   useEffect(() => {
+    if (isClickLockRef.current) return;
+
     setIsRetracted(false);
     setExpandedId(activeCategory);
 
@@ -109,6 +115,8 @@ export default function VerticalCategoryRail({
   ];
 
   const handleItemClick = (catId: string) => {
+    isClickLockRef.current = true;
+    isHoveredRef.current = false;
     setIsRetracted(false);
     setExpandedId(catId);
     onSelectCategory(catId);
@@ -120,18 +128,16 @@ export default function VerticalCategoryRail({
       clearTimeout(retractTimerRef.current);
     }
 
-    // At 1.5s after click: collapse label AND totally hide rail to the side
+    // Unconditionally collapse label AND totally hide rail after 1.5s (both mobile & PC)
     collapseTimerRef.current = setTimeout(() => {
-      if (!isHoveredRef.current) {
-        setExpandedId(null);
-      }
+      setExpandedId(null);
     }, 1500);
 
     retractTimerRef.current = setTimeout(() => {
-      if (!isHoveredRef.current) {
-        setIsRetracted(true);
-        setExpandedId(null);
-      }
+      setIsRetracted(true);
+      setExpandedId(null);
+      isClickLockRef.current = false;
+      isHoveredRef.current = false;
     }, 1500);
   };
 
@@ -139,9 +145,12 @@ export default function VerticalCategoryRail({
     <nav
       aria-label="Navigation rapide par rayon"
       onMouseEnter={() => {
-        isHoveredRef.current = true;
-        setIsRetracted(false);
-        if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+        // Only trigger hover on real mouse devices, never touch taps
+        if (typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+          isHoveredRef.current = true;
+          setIsRetracted(false);
+          if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+        }
       }}
       onMouseLeave={() => {
         isHoveredRef.current = false;
@@ -152,7 +161,7 @@ export default function VerticalCategoryRail({
           setExpandedId(null);
         }, 1500);
       }}
-      className="fixed right-[10px] sm:right-3 md:right-5 lg:right-6 z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+      className="fixed right-[10px] sm:right-3 md:right-4 lg:right-[max(1.25rem,calc((100vw-80rem)/2-4.5rem))] z-40 flex flex-col items-center gap-1 sm:gap-1.5 md:gap-2.5 p-1 md:p-1.5 lg:p-2 rounded-full overflow-visible transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
       style={{
         top: 'calc(50% + 40px)',
         transform: isRetracted
