@@ -322,7 +322,7 @@ export default function CatalogueView({
         </div>
 
         {/* ── Category Pills (Horizontal Scroll) ── */}
-        <div className="mb-8 relative">
+        <div className="mb-8 relative -mx-4 sm:mx-0">
           {/* Right fade gradient — visual cue that content continues */}
           <div
             className="pointer-events-none absolute right-0 top-0 h-full w-16 z-10"
@@ -333,7 +333,7 @@ export default function CatalogueView({
           />
           <div
             ref={filterScrollRef}
-            className="-mx-4 px-4 overflow-x-auto no-scrollbar sm:mx-0 sm:px-0"
+            className="px-4 overflow-x-auto no-scrollbar sm:px-0"
           >
             <div className="flex items-center gap-2 pb-2">
             <button
