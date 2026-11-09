@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
+import { useState, useMemo, useEffect } from 'react';
 import { Category, Product, StoreSettings } from '@/types/database';
 import { useCart } from '@/stores/cart';
 import { useSettings } from '@/stores/settings';
 import { formatPrice } from '@/hooks/use-utils';
+import VerticalCategoryRail from '@/components/catalogue/VerticalCategoryRail';
 import {
   Search,
   X,
@@ -100,7 +100,6 @@ export default function CatalogueView({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'name'>('featured');
   const [recentAddedId, setRecentAddedId] = useState<string | null>(null);
-  const filterScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setProducts(initialProducts);
@@ -138,96 +137,17 @@ export default function CatalogueView({
     }
   }, [products, items, removeItem]);
 
-  // "Nudge" animation: gently scroll the filter bar right then back to hint scrollability.
-  // Repeats every 2s until the user touches/scrolls the bar themselves.
-  useEffect(() => {
-    const el = filterScrollRef.current;
-    if (!el) return;
+  const [activeCategory, setActiveCategory] = useState<string>('all');
 
-    let killed = false;
-    let isAnimating = false;
-    let tween: gsap.core.Tween | null = null;
-    let repeatTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const stopNudging = () => {
-      if (killed) return;
-      killed = true;
-      if (repeatTimer) clearTimeout(repeatTimer);
-      if (tween) {
-        tween.kill();
-        tween = null;
+  const productCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const p of products) {
+      if (p.category_id) {
+        map[p.category_id] = (map[p.category_id] || 0) + 1;
       }
-      isAnimating = false;
-    };
-
-    const onUserInteraction = () => {
-      stopNudging();
-    };
-
-    const onUserScroll = () => {
-      // Only stop if the user manually scrolled (not our GSAP programmatic update)
-      if (!isAnimating && el.scrollLeft > 2) {
-        stopNudging();
-      }
-    };
-
-    const runNudge = () => {
-      if (killed || !el) return;
-
-      // Only nudge if content overflows (there's something to scroll)
-      if (el.scrollWidth <= el.clientWidth) return;
-
-      // Don't nudge if user has already scrolled
-      if (el.scrollLeft > 2) {
-        stopNudging();
-        return;
-      }
-
-      isAnimating = true;
-      const proxy = { x: 0 };
-      const distance = 120; // 120px to show 1-2 categories nicely
-
-      tween = gsap.to(proxy, {
-        x: distance,
-        duration: 0.55,
-        ease: 'power2.inOut',
-        yoyo: true,
-        repeat: 1,
-        repeatDelay: 0.15,
-        onUpdate: () => {
-          if (!killed && el) {
-            el.scrollLeft = proxy.x;
-          }
-        },
-        onComplete: () => {
-          if (killed) return;
-          if (el) el.scrollLeft = 0;
-          setTimeout(() => {
-            isAnimating = false;
-          }, 80);
-
-          // Re-trigger every 2s until user interacts
-          repeatTimer = setTimeout(runNudge, 2000);
-        },
-      });
-    };
-
-    el.addEventListener('touchstart', onUserInteraction, { passive: true });
-    el.addEventListener('pointerdown', onUserInteraction, { passive: true });
-    el.addEventListener('wheel', onUserInteraction, { passive: true });
-    el.addEventListener('scroll', onUserScroll, { passive: true });
-
-    // Initial nudge after 800ms
-    repeatTimer = setTimeout(runNudge, 800);
-
-    return () => {
-      stopNudging();
-      el.removeEventListener('touchstart', onUserInteraction);
-      el.removeEventListener('pointerdown', onUserInteraction);
-      el.removeEventListener('wheel', onUserInteraction);
-      el.removeEventListener('scroll', onUserScroll);
-    };
-  }, []);
+    }
+    return map;
+  }, [products]);
 
   // Filter & sort products
   const filteredProducts = useMemo(() => {
@@ -263,6 +183,69 @@ export default function CatalogueView({
     return list;
   }, [products, selectedCategory, searchQuery, sortBy]);
 
+  const isAisleMode = selectedCategory === 'all' && !searchQuery.trim();
+
+  const categoriesWithProducts = useMemo(() => {
+    if (!isAisleMode) return [];
+    return initialCategories
+      .map((cat) => ({
+        ...cat,
+        products: filteredProducts.filter((p) => p.category_id === cat.id),
+      }))
+      .filter((cat) => cat.products.length > 0);
+  }, [initialCategories, filteredProducts, isAisleMode]);
+
+  // Scroll spy: tracks which category section is currently in view
+  useEffect(() => {
+    if (!isAisleMode) {
+      setActiveCategory(selectedCategory);
+      return;
+    }
+
+    const handleScroll = () => {
+      if (window.scrollY < 200) {
+        setActiveCategory('all');
+        return;
+      }
+
+      const threshold = window.scrollY + 200;
+      let current = 'all';
+
+      for (const cat of categoriesWithProducts) {
+        const el = document.getElementById(`cat-section-${cat.id}`);
+        if (el && el.offsetTop <= threshold) {
+          current = cat.id;
+        }
+      }
+      setActiveCategory(current);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [categoriesWithProducts, isAisleMode, selectedCategory]);
+
+  const handleCategorySelect = (catId: string) => {
+    if (catId === 'all') {
+      setSelectedCategory('all');
+      setActiveCategory('all');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (isAisleMode) {
+      const el = document.getElementById(`cat-section-${catId}`);
+      if (el) {
+        const topOffset = el.getBoundingClientRect().top + window.scrollY - 110;
+        window.scrollTo({ top: topOffset, behavior: 'smooth' });
+        setActiveCategory(catId);
+        return;
+      }
+    }
+
+    setSelectedCategory(catId);
+    setActiveCategory(catId);
+  };
+
   const handleAddToCart = (product: Product) => {
     if (!product.is_available) return;
     addItem(
@@ -286,6 +269,124 @@ export default function CatalogueView({
   const getItemQuantityInCart = (productId: string) => {
     const found = items.find((i) => i.id === productId);
     return found ? found.quantity : 0;
+  };
+
+  const renderProductCard = (p: Product) => {
+    const qtyInCart = getItemQuantityInCart(p.id);
+    const isRecentlyAdded = recentAddedId === p.id;
+
+    return (
+      <div
+        key={p.id}
+        className={`product-card group relative flex flex-col justify-between overflow-hidden p-3.5 sm:p-5 transition-all ${
+          !p.is_available
+            ? 'opacity-55 grayscale cursor-not-allowed'
+            : 'hover:border-primary'
+        }`}
+      >
+        {/* Badges */}
+        <div className="absolute left-3 top-3 right-3 flex items-start justify-between z-10 pointer-events-none">
+          {p.is_featured && p.is_available && (
+            <span className="flex items-center gap-1 rounded-full bg-primary/20 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-primary">
+              <Flame className="h-3 w-3" />
+              Top
+            </span>
+          )}
+          {p.is_age_restricted && (
+            <span className="flex items-center gap-0.5 rounded-full bg-error/20 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-error ml-auto">
+              <ShieldAlert className="h-3 w-3" />
+              18+
+            </span>
+          )}
+          {!p.is_available && (
+            <span className="rounded-full bg-black/75 px-2.5 py-0.5 text-[10px] font-bold text-white/80 border border-white/20">
+              Épuisé
+            </span>
+          )}
+        </div>
+
+        {/* Product Image with Ambient Smoke / Glow */}
+        <div className="relative mx-auto my-3 flex h-32 w-32 items-center justify-center sm:h-44 sm:w-44">
+          <div
+            className="absolute -inset-1 rounded-full blur-2xl opacity-60 transition-all duration-500 group-hover:scale-115 group-hover:opacity-90 pointer-events-none"
+            style={{
+              background: `radial-gradient(circle at 50% 50%, ${getProductGlowColor(p)} 0%, transparent 70%)`,
+            }}
+          />
+
+          <img
+            src={p.image_url}
+            alt={p.nom}
+            className="relative z-10 h-full w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+
+        {/* Info & Action */}
+        <div className="flex flex-col justify-between flex-1">
+          <div>
+            <h3 className="line-clamp-2 text-xs font-semibold text-white sm:text-sm">
+              {p.nom}
+            </h3>
+            <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-text-muted sm:text-xs">
+              {p.description}
+            </p>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between pt-2 border-t border-white/5">
+            <div>
+              <span className="font-mono text-sm font-bold text-primary sm:text-base">
+                {formatPrice(p.price_cents)}
+              </span>
+            </div>
+
+            {/* Add to Cart Actions */}
+            {p.is_available ? (
+              qtyInCart > 0 ? (
+                <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5">
+                  <button
+                    onClick={() => updateQuantity(p.id, qtyInCart - 1)}
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
+                    aria-label="Diminuer"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className="min-w-4 text-center font-mono text-xs font-bold text-primary">
+                    {qtyInCart}
+                  </span>
+                  <button
+                    onClick={() => updateQuantity(p.id, qtyInCart + 1)}
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
+                    aria-label="Augmenter"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleAddToCart(p)}
+                  className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full transition-all active:scale-95 ${
+                    isRecentlyAdded
+                      ? 'bg-primary text-black shadow-glow'
+                      : 'bg-white/10 text-white hover:bg-primary hover:text-black'
+                  }`}
+                  aria-label={`Ajouter ${p.nom} au panier`}
+                >
+                  {isRecentlyAdded ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                </button>
+              )
+            ) : (
+              <span className="text-[11px] font-medium text-white/30">
+                Indisponible
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -365,204 +466,90 @@ export default function CatalogueView({
           </div>
         </div>
 
-        {/* ── Category Pills (Horizontal Scroll) ── */}
-        <div className="mb-8 relative -mx-4 sm:mx-0">
-          {/* Right fade gradient — visual cue that content continues */}
-          <div
-            className="pointer-events-none absolute right-0 top-0 h-full w-16 z-10"
-            style={{
-              background: 'linear-gradient(to right, transparent, #0A0A0A)',
-            }}
-            aria-hidden="true"
+        {/* ── Main Layout: Sticky Desktop Sidebar + Products Feed + Floating Mobile Rail ── */}
+        <div className="flex gap-8 items-start">
+          {/* Vertical Category Rail */}
+          <VerticalCategoryRail
+            categories={initialCategories}
+            totalProductsCount={initialProducts.length}
+            activeCategory={activeCategory}
+            onSelectCategory={handleCategorySelect}
+            productCounts={productCounts}
           />
-          <div
-            ref={filterScrollRef}
-            className="px-4 overflow-x-auto no-scrollbar sm:px-0"
-          >
-            <div className="flex items-center gap-2 pb-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`flex-shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
-                selectedCategory === 'all'
-                  ? 'bg-primary text-black shadow-glow font-bold'
-                  : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              ✨ Tout voir ({initialProducts.length})
-            </button>
-            {initialCategories.map((cat) => {
-              const count = initialProducts.filter((p) => p.category_id === cat.id).length;
-              const isSelected = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex-shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
-                    isSelected
-                      ? 'bg-primary text-black shadow-glow font-bold'
-                      : 'bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {cat.icon && <span>{cat.icon}</span>}
-                  <span>{cat.name}</span>
-                  <span
-                    className={`ml-1 text-[10px] ${
-                      isSelected ? 'text-black/60' : 'text-white/40'
-                    }`}
-                  >
-                    ({count})
+
+          {/* Main Products Container */}
+          <div className="flex-1 min-w-0 pr-10 md:pr-0">
+            {/* Filter mode pill notice */}
+            {selectedCategory !== 'all' && (
+              <div className="mb-6 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5">
+                <div className="flex items-center gap-2 text-xs font-semibold text-white">
+                  <span>Rayon filtré :</span>
+                  <span className="text-primary font-bold">
+                    {initialCategories.find((c) => c.id === selectedCategory)?.name || selectedCategory}
                   </span>
+                </div>
+                <button
+                  onClick={() => handleCategorySelect('all')}
+                  className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                >
+                  ✕ Voir tout le catalogue
                 </button>
-              );
-            })}
-          </div>
+              </div>
+            )}
+
+            {filteredProducts.length === 0 ? (
+              <div className="rounded-3xl border border-white/5 bg-surface-elevated p-12 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5 text-white/40">
+                  <Search className="h-8 w-8" />
+                </div>
+                <h3 className="font-display text-2xl tracking-wide text-white">
+                  AUCUN PRODUIT TROUVÉ
+                </h3>
+                <p className="mt-2 text-sm text-text-muted">
+                  Aucun résultat ne correspond à votre recherche. Essayez un autre terme ou réinitialisez les filtres.
+                </p>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    handleCategorySelect('all');
+                  }}
+                  className="btn-pill btn-pill-outline mt-6 text-xs"
+                >
+                  Réinitialiser les filtres
+                </button>
+              </div>
+            ) : isAisleMode ? (
+              /* Continuous vertical aisle mode: grouped by category with headers */
+              <div className="space-y-12">
+                {categoriesWithProducts.map((cat) => (
+                  <section
+                    key={cat.id}
+                    id={`cat-section-${cat.id}`}
+                    className="scroll-mt-28"
+                  >
+                    <div className="flex items-center gap-2.5 pb-2.5 mb-4 border-b border-white/10">
+                      <span className="text-2xl">{cat.icon}</span>
+                      <h2 className="font-display text-xl tracking-wide text-white uppercase sm:text-2xl">
+                        {cat.name}
+                      </h2>
+                      <span className="text-xs font-mono text-primary font-bold">
+                        ({cat.products.length})
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {cat.products.map(renderProductCard)}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              /* Single category filtered or active search query */
+              <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredProducts.map(renderProductCard)}
+              </div>
+            )}
           </div>
         </div>
-
-        {/* ── Product Grid ────────────────────── */}
-        {filteredProducts.length === 0 ? (
-          <div className="rounded-3xl border border-white/5 bg-surface-elevated p-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5 text-white/40">
-              <Search className="h-8 w-8" />
-            </div>
-            <h3 className="font-display text-2xl tracking-wide text-white">
-              AUCUN PRODUIT TROUVÉ
-            </h3>
-            <p className="mt-2 text-sm text-text-muted">
-              Aucun résultat ne correspond à votre recherche. Essayez un autre terme ou réinitialisez les filtres.
-            </p>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('all');
-              }}
-              className="btn-pill btn-pill-outline mt-6 text-xs"
-            >
-              Réinitialiser les filtres
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
-            {filteredProducts.map((p) => {
-              const qtyInCart = getItemQuantityInCart(p.id);
-              const isRecentlyAdded = recentAddedId === p.id;
-
-              return (
-                <div
-                  key={p.id}
-                  className={`product-card group relative flex flex-col justify-between overflow-hidden p-3.5 sm:p-5 transition-all ${
-                    !p.is_available
-                      ? 'opacity-55 grayscale cursor-not-allowed'
-                      : 'hover:border-primary'
-                  }`}
-                >
-                  {/* Badges */}
-                  <div className="absolute left-3 top-3 right-3 flex items-start justify-between z-10 pointer-events-none">
-                    {p.is_featured && p.is_available && (
-                      <span className="flex items-center gap-1 rounded-full bg-primary/20 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-primary">
-                        <Flame className="h-3 w-3" />
-                        Top
-                      </span>
-                    )}
-                    {p.is_age_restricted && (
-                      <span className="flex items-center gap-0.5 rounded-full bg-error/20 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-error ml-auto">
-                        <ShieldAlert className="h-3 w-3" />
-                        18+
-                      </span>
-                    )}
-                    {!p.is_available && (
-                      <span className="rounded-full bg-black/75 px-2.5 py-0.5 text-[10px] font-bold text-white/80 border border-white/20">
-                        Épuisé
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Product Image with Ambient Smoke / Glow */}
-                  <div className="relative mx-auto my-3 flex h-32 w-32 items-center justify-center sm:h-44 sm:w-44">
-                    {/* Immersive ambient colored smoke/glow */}
-                    <div
-                      className="absolute -inset-1 rounded-full blur-2xl opacity-60 transition-all duration-500 group-hover:scale-115 group-hover:opacity-90 pointer-events-none"
-                      style={{
-                        background: `radial-gradient(circle at 50% 50%, ${getProductGlowColor(p)} 0%, transparent 70%)`,
-                      }}
-                    />
-
-                    <img
-                      src={p.image_url}
-                      alt={p.nom}
-                      className="relative z-10 h-full w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-
-                  {/* Info & Action */}
-                  <div className="flex flex-col justify-between flex-1">
-                    <div>
-                      <h3 className="line-clamp-2 text-xs font-semibold text-white sm:text-sm">
-                        {p.nom}
-                      </h3>
-                      <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-text-muted sm:text-xs">
-                        {p.description}
-                      </p>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between pt-2 border-t border-white/5">
-                      <div>
-                        <span className="font-mono text-sm font-bold text-primary sm:text-base">
-                          {formatPrice(p.price_cents)}
-                        </span>
-                      </div>
-
-                      {/* Add to Cart Actions */}
-                      {p.is_available ? (
-                        qtyInCart > 0 ? (
-                          <div className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5">
-                            <button
-                              onClick={() => updateQuantity(p.id, qtyInCart - 1)}
-                              className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
-                              aria-label="Diminuer"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </button>
-                            <span className="min-w-4 text-center font-mono text-xs font-bold text-primary">
-                              {qtyInCart}
-                            </span>
-                            <button
-                              onClick={() => updateQuantity(p.id, qtyInCart + 1)}
-                              className="flex h-7 w-7 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
-                              aria-label="Augmenter"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleAddToCart(p)}
-                            className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full transition-all active:scale-95 ${
-                              isRecentlyAdded
-                                ? 'bg-primary text-black shadow-glow'
-                                : 'bg-white/10 text-white hover:bg-primary hover:text-black'
-                            }`}
-                            aria-label={`Ajouter ${p.nom} au panier`}
-                          >
-                            {isRecentlyAdded ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <Plus className="h-4 w-4" />
-                            )}
-                          </button>
-                        )
-                      ) : (
-                        <span className="text-[11px] font-medium text-white/30">
-                          Indisponible
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       {/* ── Mobile Floating Cart Bar ──────────── */}
