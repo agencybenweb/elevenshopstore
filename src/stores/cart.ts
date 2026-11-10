@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSettings } from '@/stores/settings';
+import { isAlcoholItem } from '@/lib/alcohol';
 
 export interface CartItem {
   id: string;
@@ -11,6 +12,8 @@ export interface CartItem {
   image: string;
   quantity: number;
   isAgeRestricted?: boolean;
+  isAlcohol?: boolean;
+  categoryId?: string;
 }
 
 const CART_KEY = 'eleven-shop-cart';
@@ -161,6 +164,12 @@ export function useCart() {
     notify();
   }, []);
 
+  const removeAlcoholItems = useCallback(() => {
+    cartState = cartState.filter((i) => !isAlcoholItem(i));
+    saveCart(cartState);
+    notify();
+  }, []);
+
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotalCents = items.reduce(
     (sum, i) => sum + i.priceCents * i.quantity,
@@ -185,7 +194,9 @@ export function useCart() {
     Math.round((subtotalCents / freeDeliveryAboveCents) * 100)
   );
 
-  const hasAgeRestricted = items.some((i) => i.isAgeRestricted);
+  const hasAgeRestricted = items.some((i) => i.isAgeRestricted || isAlcoholItem(i));
+  const hasAlcohol = items.some((i) => isAlcoholItem(i));
+  const alcoholItems = items.filter((i) => isAlcoholItem(i));
 
   return {
     items,
@@ -198,6 +209,7 @@ export function useCart() {
     removeItem,
     updateQuantity,
     clearCart,
+    removeAlcoholItems,
     totalItems,
     subtotalCents,
     deliveryFeeCents,
@@ -208,6 +220,8 @@ export function useCart() {
     missingForFreeDeliveryCents,
     freeDeliveryProgress,
     hasAgeRestricted,
+    hasAlcohol,
+    alcoholItems,
     minOrderCents,
     freeDeliveryAboveCents,
   };

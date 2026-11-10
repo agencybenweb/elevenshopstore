@@ -6,6 +6,7 @@ import { getServiceRoleClient, isSupabaseConfigured } from '@/lib/supabase';
 import { saveInMemoryOrder } from '@/lib/orders-store';
 import { Order, OrderItem } from '@/types/database';
 import { ensureTelegramPollerStarted } from '@/lib/telegram-poller';
+import { isAlcoholItem, isAlcoholCurfewActive } from '@/lib/alcohol';
 
 // Simple IP rate limit cache: IP -> timestamp[]
 const ipRateLimits = new Map<string, number[]>();
@@ -106,6 +107,7 @@ export async function POST(req: NextRequest) {
     const validatedItems: OrderItem[] = [];
     let subtotalCents = 0;
     let hasAgeRestricted = false;
+    let hasAlcohol = false;
 
     for (const item of input.items) {
       let resolvedId = item.product_id;
@@ -142,8 +144,11 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (product.is_age_restricted) {
+      if (product.is_age_restricted || isAlcoholItem(product)) {
         hasAgeRestricted = true;
+      }
+      if (isAlcoholItem(product)) {
+        hasAlcohol = true;
       }
 
       const itemTotal = product.price_cents * item.quantity;
@@ -157,12 +162,23 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 7. Check Age restriction confirmation
+    // 7. Check alcohol curfew (22h00 - 06h00)
+    if (hasAlcohol && isAlcoholCurfewActive()) {
+      return NextResponse.json(
+        {
+          error:
+            "Conformément à l’article L. 3322-9 du Code de la santé publique, la vente à emporter et la livraison de boissons alcoolisées sont formellement interdites entre 22h00 et 06h00. Veuillez retirer les articles alcoolisés de votre panier pour finaliser votre commande nocturne.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // 8. Check Age restriction confirmation
     if (hasAgeRestricted && !input.is_adult_confirmed) {
       return NextResponse.json(
         {
           error:
-            'Des produits soumis à restriction d’âge (18+) sont présents dans votre commande. Vous devez certifier être majeur(e).',
+            'Des produits soumis à restriction d’âge (18+) sont présents dans votre commande. Vous devez certifier être majeur(e) et vous engager à présenter une pièce d’identité originale au livreur.',
         },
         { status: 400 }
       );

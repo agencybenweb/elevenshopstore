@@ -1,10 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/stores/cart';
 import { formatPrice } from '@/hooks/use-utils';
+import {
+  isAlcoholItem,
+  isAlcoholCurfewActive,
+  getParisTime,
+  ALCOHOL_LEGAL_NOTICES,
+} from '@/lib/alcohol';
 import {
   ShoppingBag,
   Trash2,
@@ -12,6 +18,9 @@ import {
   Minus,
   Sparkles,
   ShieldAlert,
+  AlertTriangle,
+  Clock,
+  Ban,
   Truck,
   CreditCard,
   Banknote,
@@ -29,6 +38,7 @@ export default function CheckoutView() {
     updateQuantity,
     removeItem,
     clearCart,
+    removeAlcoholItems,
     totalItems,
     subtotalCents,
     deliveryFeeCents,
@@ -39,8 +49,24 @@ export default function CheckoutView() {
     missingForFreeDeliveryCents,
     freeDeliveryProgress,
     hasAgeRestricted,
+    hasAlcohol,
+    alcoholItems,
     minOrderCents,
   } = useCart();
+
+  // Curfew live state (Europe/Paris timezone: 22h - 6h)
+  const [curfewActive, setCurfewActive] = useState(false);
+  const [currentParisTime, setCurrentParisTime] = useState('');
+
+  useEffect(() => {
+    const updateCurfew = () => {
+      setCurfewActive(isAlcoholCurfewActive());
+      setCurrentParisTime(getParisTime().formatted);
+    };
+    updateCurfew();
+    const interval = setInterval(updateCurfew, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Form State
   const [clientName, setClientName] = useState('');
@@ -81,8 +107,19 @@ export default function CheckoutView() {
       return;
     }
 
+    if (hasAlcohol && isAlcoholCurfewActive()) {
+      setErrorMessage(
+        "Conformément à la réglementation (art. L. 3322-9 CSP), la vente et la livraison d'alcool sont strictement interdites entre 22h00 et 06h00. Veuillez retirer les boissons alcoolisées de votre panier pour finaliser votre commande nocturne."
+      );
+      return;
+    }
+
     if (hasAgeRestricted && !isAdultConfirmed) {
-      setErrorMessage('Veuillez certifier sur l’honneur être majeur(e) (18 ans ou plus).');
+      setErrorMessage(
+        hasAlcohol
+          ? 'Veuillez certifier sur l’honneur être majeur(e) (18 ans ou plus) et confirmer que vous présenterez votre pièce d’identité originale au livreur.'
+          : 'Veuillez certifier sur l’honneur être majeur(e) (18 ans ou plus).'
+      );
       return;
     }
 
@@ -234,6 +271,13 @@ export default function CheckoutView() {
                       <h3 className="truncate text-xs font-semibold text-white sm:text-sm">
                         {item.name}
                       </h3>
+                      {isAlcoholItem(item) && (
+                        <div className="mt-0.5">
+                          <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">
+                            🔞 18+ Alcool • CNI requise
+                          </span>
+                        </div>
+                      )}
                       <div className="mt-1 flex items-center justify-between">
                         <span className="font-mono text-xs font-bold text-primary">
                           {formatPrice(item.priceCents * item.quantity)}
@@ -297,6 +341,50 @@ export default function CheckoutView() {
                   Minimum de commande : <strong>{formatPrice(minOrderCents)}</strong>
                   <br />
                   Il manque <strong>{formatPrice(missingForMinOrderCents)}</strong> d'articles pour commander.
+                </div>
+              )}
+
+              {/* Alcohol Notification in Recap */}
+              {hasAlcohol && (
+                <div
+                  className={`mt-4 rounded-2xl border p-3.5 text-xs transition-all ${
+                    curfewActive
+                      ? 'border-red-500/40 bg-red-500/10 text-red-200'
+                      : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 font-bold">
+                    <span className="flex items-center gap-1.5">
+                      {curfewActive ? (
+                        <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                      ) : (
+                        <ShieldAlert className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                      )}
+                      <span className={curfewActive ? 'text-red-400 uppercase tracking-wide' : 'text-amber-400 uppercase tracking-wide'}>
+                        {curfewActive ? 'Vente interdite (22h - 6h)' : 'Alcool dans le panier (18+)'}
+                      </span>
+                    </span>
+                    {curfewActive && currentParisTime && (
+                      <span className="rounded bg-red-500/20 px-1.5 py-0.5 font-mono text-[10px] text-red-300">
+                        {currentParisTime}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-white/80 leading-relaxed">
+                    {curfewActive
+                      ? 'Conformément à l’art. L. 3322-9 du CSP, la vente et la livraison d’alcool sont interdites entre 22h et 6h. Retirez les boissons alcoolisées pour commander.'
+                      : 'Vente interdite entre 22h et 6h. Carte d’identité originale avec photo exigée par le livreur.'}
+                  </p>
+                  {curfewActive && (
+                    <button
+                      type="button"
+                      onClick={removeAlcoholItems}
+                      className="mt-2.5 inline-flex items-center gap-1.5 rounded-xl bg-red-600/80 hover:bg-red-600 px-3 py-1.5 text-[11px] font-bold text-white transition-colors"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      <span>Retirer l’alcool du panier</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -502,18 +590,137 @@ export default function CheckoutView() {
                 </div>
               </div>
 
-              {/* ── 18+ Age Verification ─────────── */}
-              {hasAgeRestricted && (
-                <div className="rounded-2xl border border-warning/40 bg-warning/10 p-4">
-                  <div className="flex items-start gap-3">
+              {/* ── 18+ Age Verification & Alcohol Regulations ─────────── */}
+              {hasAlcohol ? (
+                <div className="space-y-4">
+                  {/* 1. Notification Vente Interdite 22h - 6h */}
+                  {curfewActive ? (
+                    <div className="rounded-2xl border border-red-500/50 bg-red-950/40 p-5 shadow-lg backdrop-blur-sm">
+                      <div className="flex items-start gap-3.5">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-500/20 text-red-400">
+                          <Ban className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h4 className="text-sm font-bold uppercase tracking-wide text-red-400 flex items-center gap-2">
+                              <span>Vente interdite entre 22h et 6h</span>
+                            </h4>
+                            <span className="rounded-full bg-red-500/20 border border-red-500/30 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-red-200">
+                              {currentParisTime ? `Heure actuelle : ${currentParisTime}` : 'Créneau nocturne restreint'}
+                            </span>
+                          </div>
+
+                          <p className="text-xs text-white/90 leading-relaxed">
+                            Conformément à l’<strong>article L. 3322-9 du Code de la santé publique</strong>, la vente à emporter et la livraison à domicile de boissons alcooliques sont <strong>strictement interdites entre 22h00 et 06h00</strong>.
+                          </p>
+
+                          <div className="rounded-xl bg-black/50 p-3 border border-red-500/20 text-xs">
+                            <span className="font-semibold text-red-200">Articles soumis à cette interdiction dans votre panier :</span>
+                            <ul className="mt-1 list-disc list-inside space-y-0.5 text-white/80">
+                              {alcoholItems.map((item) => (
+                                <li key={item.id}>
+                                  {item.name} <span className="text-white/40">({item.quantity}x)</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <p className="text-xs text-white/80">
+                            Pour commander vos boissons sans alcool, confiseries, snacks ou épicerie de nuit, retirez simplement les boissons alcoolisées.
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={removeAlcoholItems}
+                            className="mt-1 inline-flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md active:scale-95"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Retirer les boissons alcoolisées du panier</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-5">
+                      <div className="flex items-start gap-3.5">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400">
+                          <Clock className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 space-y-1.5">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h4 className="text-sm font-bold uppercase tracking-wide text-amber-300">
+                              Réglementation horaire : Vente interdite entre 22h et 6h
+                            </h4>
+                            <span className="rounded-full bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+                              Art. L. 3322-9 CSP
+                            </span>
+                          </div>
+                          <p className="text-xs text-white/85 leading-relaxed">
+                            Conformément à la réglementation française, la vente et la livraison de boissons alcooliques sont formellement <strong>interdites entre 22h00 et 06h00</strong>. Votre commande sera préparée et livrée dans le respect des créneaux horaires légaux autorisés (06h00 – 22h00).
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. Notification Carte d'Identité Nécessaire */}
+                  <div className="rounded-2xl border border-warning/40 bg-warning/10 p-5">
+                    <div className="flex items-start gap-3.5">
+                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-warning/20 text-warning">
+                        <ShieldAlert className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 space-y-2.5">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h4 className="text-sm font-bold uppercase tracking-wide text-warning flex items-center gap-1.5">
+                            <span>Carte d’identité originale obligatoire</span>
+                          </h4>
+                          <span className="rounded-full bg-warning/20 border border-warning/30 px-2 py-0.5 text-[10px] font-bold text-warning">
+                            18+ • Art. L. 3342-1 CSP
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-white/90 leading-relaxed">
+                          La vente de boissons alcooliques est <strong>strictement interdite aux mineurs de moins de 18 ans</strong>.
+                        </p>
+
+                        <div className="rounded-xl border border-white/10 bg-black/40 p-3.5 text-xs text-white/85 space-y-1.5">
+                          <div className="font-semibold text-white flex items-center gap-1.5">
+                            <span className="text-base">🪪</span> Contrôle systématique par le livreur :
+                          </div>
+                          <p className="text-white/75 leading-relaxed">
+                            Une <strong>pièce d’identité officielle physique originale avec photo</strong> (Carte Nationale d’Identité, Passeport ou Permis de conduire) vous sera <strong>obligatoirement demandée et vérifiée par le livreur</strong> avant la remise de votre commande. Les photos sur smartphone ou photocopies sont formellement refusées.
+                          </p>
+                          <div className="rounded-lg bg-amber-500/15 border border-amber-500/25 p-2 text-[11px] text-amber-200 font-medium">
+                            ⚠️ En cas de non-présentation d’un original valide ou si le client est mineur, les boissons alcoolisées seront immédiatement conservées et non livrées.
+                          </div>
+                        </div>
+
+                        <label className="mt-3 flex items-start gap-2.5 cursor-pointer text-xs font-semibold text-white">
+                          <input
+                            type="checkbox"
+                            required
+                            checked={isAdultConfirmed}
+                            onChange={(e) => setIsAdultConfirmed(e.target.checked)}
+                            className="h-4 w-4 mt-0.5 rounded border-white/20 bg-black text-primary focus:ring-primary"
+                          />
+                          <span className="leading-snug">
+                            Je certifie sur l’honneur être majeur(e) (18 ans ou plus) et je m’engage à présenter ma pièce d’identité originale avec photo au livreur *
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : hasAgeRestricted ? (
+                <div className="rounded-2xl border border-warning/40 bg-warning/10 p-5">
+                  <div className="flex items-start gap-3.5">
                     <ShieldAlert className="h-5 w-5 flex-shrink-0 text-warning mt-0.5" />
                     <div>
                       <div className="text-sm font-bold text-warning">
                         Vérification de la majorité (18 ans ou plus)
                       </div>
                       <p className="mt-1 text-xs text-white/80 leading-relaxed">
-                        Votre panier comporte des boissons soumises à la réglementation sur l'alcool.
-                        La vente est interdite aux mineurs. Une pièce d’identité pourra être exigée par le livreur.
+                        Votre panier comporte des produits réservés aux personnes majeures (18+). Une pièce d’identité originale pourra être exigée par le livreur lors de la livraison.
                       </p>
                       <label className="mt-3 flex items-center gap-2 cursor-pointer text-xs font-semibold text-white">
                         <input
@@ -528,15 +735,15 @@ export default function CheckoutView() {
                     </div>
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* ── Submit Button ────────────────── */}
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={!isMinOrderReached || isSubmitting}
+                  disabled={!isMinOrderReached || isSubmitting || (hasAlcohol && curfewActive)}
                   className={`btn-pill btn-pill-primary w-full py-4 text-base font-bold shadow-glow flex items-center justify-center gap-2 ${
-                    !isMinOrderReached || isSubmitting
+                    !isMinOrderReached || isSubmitting || (hasAlcohol && curfewActive)
                       ? 'opacity-40 cursor-not-allowed hover:scale-100 hover:shadow-none'
                       : ''
                   }`}
@@ -545,6 +752,11 @@ export default function CheckoutView() {
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
                       <span>Enregistrement de la commande...</span>
+                    </>
+                  ) : hasAlcohol && curfewActive ? (
+                    <>
+                      <Ban className="h-5 w-5" />
+                      <span>Vente d'alcool interdite entre 22h et 6h</span>
                     </>
                   ) : (
                     <>

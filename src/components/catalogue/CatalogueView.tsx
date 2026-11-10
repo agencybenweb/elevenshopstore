@@ -5,6 +5,7 @@ import { Category, Product, StoreSettings } from '@/types/database';
 import { useCart } from '@/stores/cart';
 import { useSettings } from '@/stores/settings';
 import { formatPrice } from '@/hooks/use-utils';
+import { isAlcoholItem } from '@/lib/alcohol';
 import VerticalCategoryRail from '@/components/catalogue/VerticalCategoryRail';
 import {
   Search,
@@ -267,6 +268,8 @@ export default function CatalogueView({
         priceCents: product.price_cents,
         image: product.image_url,
         isAgeRestricted: product.is_age_restricted,
+        isAlcohol: isAlcoholItem(product),
+        categoryId: product.category_id,
       },
       1,
       false // don't force open drawer every single click, just show feedback

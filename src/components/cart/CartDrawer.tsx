@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/stores/cart';
 import { formatPrice } from '@/hooks/use-utils';
+import { isAlcoholItem } from '@/lib/alcohol';
 import {
   X,
   Plus,
@@ -32,6 +33,7 @@ export default function CartDrawer() {
     missingForFreeDeliveryCents,
     freeDeliveryProgress,
     hasAgeRestricted,
+    hasAlcohol,
     minOrderCents,
   } = useCart();
 
@@ -165,6 +167,11 @@ export default function CartDrawer() {
                       <h4 className="truncate text-sm font-semibold text-white">
                         {item.name}
                       </h4>
+                      {isAlcoholItem(item) && (
+                        <span className="mt-0.5 inline-block rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300">
+                          18+ Alcool • CNI requise
+                        </span>
+                      )}
                       <button
                         onClick={() => removeItem(item.id)}
                         className="p-1 text-white/40 hover:text-error transition-colors"
@@ -211,14 +218,24 @@ export default function CartDrawer() {
         {items.length > 0 && (
           <div className="border-t border-white/10 bg-surface-muted/90 p-5 space-y-3">
             {/* 18+ Warning */}
-            {hasAgeRestricted && (
+            {hasAlcohol ? (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-200">
+                <div className="flex items-center gap-2 font-bold text-amber-400">
+                  <ShieldAlert className="h-4 w-4 flex-shrink-0" />
+                  <span>Boisson alcoolisée (18+)</span>
+                </div>
+                <p className="mt-1 text-[11px] text-white/80 leading-relaxed">
+                  Vente interdite entre 22h et 6h • Pièce d’identité originale obligatoire à la livraison.
+                </p>
+              </div>
+            ) : hasAgeRestricted ? (
               <div className="flex items-center gap-2.5 rounded-xl border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
                 <ShieldAlert className="h-4 w-4 flex-shrink-0" />
                 <span>
                   <strong>Produit 18+ dans le panier :</strong> Pièce d'identité exigible à la livraison.
                 </span>
               </div>
-            )}
+            ) : null}
 
             {/* Price breakdown */}
             <div className="space-y-1.5 text-sm">

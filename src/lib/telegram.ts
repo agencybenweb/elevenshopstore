@@ -1,4 +1,5 @@
 import { Order, OrderItem } from '@/types/database';
+import { isAlcoholItem } from '@/lib/alcohol';
 
 // Server-safe price formatter (cannot use client-only hooks here)
 function formatPrice(cents: number): string {
@@ -82,6 +83,13 @@ ${itemsText}
     if (cleanNotes) {
       text += `\n📝 <b>Remarques :</b> <i>${escapeHtml(cleanNotes)}</i>`;
     }
+  }
+
+  const hasAlcohol = items.some((i) =>
+    isAlcoholItem({ name: i.product_name, id: i.product_id })
+  );
+  if (hasAlcohol) {
+    text += `\n\n🔞 <b>ALCOOL DÉTECTÉ (18+) :</b>\n⚠️ <i>Contrôle de la carte d'identité originale obligatoire par le livreur !</i>`;
   }
 
   return text;
