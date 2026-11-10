@@ -6,7 +6,7 @@ import { getServiceRoleClient, isSupabaseConfigured } from '@/lib/supabase';
 import { saveInMemoryOrder } from '@/lib/orders-store';
 import { Order, OrderItem } from '@/types/database';
 import { ensureTelegramPollerStarted } from '@/lib/telegram-poller';
-import { isAlcoholItem, isAlcoholCurfewActive } from '@/lib/alcohol';
+import { isAlcoholItem } from '@/lib/alcohol';
 
 // Simple IP rate limit cache: IP -> timestamp[]
 const ipRateLimits = new Map<string, number[]>();
@@ -162,18 +162,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 7. Check alcohol curfew (22h00 - 06h00)
-    if (hasAlcohol && isAlcoholCurfewActive()) {
-      return NextResponse.json(
-        {
-          error:
-            "Conformément à l’article L. 3322-9 du Code de la santé publique, la vente à emporter et la livraison de boissons alcoolisées sont formellement interdites entre 22h00 et 06h00. Veuillez retirer les articles alcoolisés de votre panier pour finaliser votre commande nocturne.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // 8. Check Age restriction confirmation
+    // 7. Check Age restriction confirmation
     if (hasAgeRestricted && !input.is_adult_confirmed) {
       return NextResponse.json(
         {

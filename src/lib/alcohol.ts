@@ -88,3 +88,4 @@ export const ALCOHOL_LEGAL_NOTICES = {
   checkboxLabel:
     'Je certifie sur l’honneur être majeur(e) (18 ans ou plus) et je m’engage à présenter ma pièce d’identité originale avec photo au livreur *',
 };
+
