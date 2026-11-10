@@ -116,15 +116,37 @@ export default function VerticalCategoryRail({
     const handleTouchMove = () => handleScrollActivity(true);
     const handleScroll = () => handleScrollActivity(false);
 
+    // Wake up rail immediately when cursor approaches the right edge / margin on PC
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isMouseDevice()) return;
+      if (isClickActionRef.current) return;
+
+      const screenRightThreshold = window.innerWidth - 80;
+      const containerRightThreshold = (window.innerWidth + Math.min(window.innerWidth, 1280)) / 2 - 30;
+      const rightThreshold = Math.min(screenRightThreshold, containerRightThreshold);
+
+      if (e.clientX >= rightThreshold) {
+        if (wakeUpTimerRef.current) {
+          clearTimeout(wakeUpTimerRef.current);
+          wakeUpTimerRef.current = null;
+        }
+        setRetractedState(false);
+        setActiveLabelId(null);
+        scheduleRetract();
+      }
+    };
+
     window.addEventListener('wheel', handleWheel, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('scroll', handleScroll);
       if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
       if (wakeUpTimerRef.current) clearTimeout(wakeUpTimerRef.current);
