@@ -1,4 +1,4 @@
-﻿import { Category, Product, StoreSettings } from '@/types/database';
+import { Category, Product, StoreSettings } from '@/types/database';
 import { siteConfig } from '@/config/site';
 
 export const DEMO_SETTINGS: StoreSettings = {
@@ -733,7 +733,7 @@ export const DEMO_PRODUCTS: Product[] = [
     slug: 'red-bull-ruby-edition-poire-epicee',
     description: 'Édition limitée Ruby — alliance unique de poire juteuse, cannelle, anis étoilé et piment pour une expérience épicée et fruitée.',
     price_cents: 320,
-    image_url: '/products/card-redbull-ruby-pear.jpg',
+    image_url: '/products/card-redbull-ruby-pear.png',
     category_id: 'cat-energy',
     is_available: true,
     stock: 15,

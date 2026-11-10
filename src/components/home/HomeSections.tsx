@@ -126,7 +126,7 @@ export function HowItWorks() {
 /* ── Popular Products ────────────────────── */
 const popularProducts = [
   { id: 'energy-monster-strawberry',  name: 'Monster Ultra Strawberry Dreams', priceCents: 290, price: '2,90 €', image: '/products/card-monster-strawberry.png',  tag: '⭐ Top', glow: 'rgba(255, 51, 119, 0.40)' },
-  { id: 'energy-redbull-ruby',        name: 'Red Bull Ruby Edition',           priceCents: 320, price: '3,20 €', image: '/products/card-redbull-ruby.png',        tag: '⭐ Top', glow: 'rgba(255, 0, 77, 0.40)' },
+  { id: 'energy-redbull-ruby-pear',   name: 'Red Bull Ruby Spiced Pear',       priceCents: 320, price: '3,20 €', image: '/products/card-redbull-ruby-pear.png',   tag: '⭐ Top', glow: 'rgba(224, 58, 30, 0.45)' },
   { id: 'snack-takis-blue-heat',      name: 'Takis Blue Heat',                 priceCents: 350, price: '3,50 €', image: '/products/card-takis-blue.png',          tag: 'Tendance', glow: 'rgba(0, 170, 255, 0.45)' },
   { id: 'soda-drpepper-coconut',      name: 'Dr Pepper Creamy Coconut',        priceCents: 280, price: '2,80 €', image: '/products/card-drpepper-coconut.png',    tag: 'Import 🇺🇸', glow: 'rgba(0, 204, 180, 0.40)' },
 ];
