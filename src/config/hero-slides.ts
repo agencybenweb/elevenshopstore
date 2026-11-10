@@ -73,7 +73,7 @@ export const heroSlides: HeroSlide[] = [
     image: '/products/hero-redbull-ruby-pear.png',
     floatingElements: [
       { src: '/hero/chili-whole.png', alt: 'Piment rouge', depth: 0.9, initialX: '21%', initialY: '38%', size: 105, rotation: -16 },
-      { src: '/hero/chili-slice.png', alt: 'Piment coupé en deux', depth: 0.75, initialX: '83%', initialY: '28%', size: 110, rotation: 25 },
+      { src: '/hero/chili-slice.png', alt: 'Piment coupé en deux', depth: 0.75, initialX: '79%', initialY: '36%', size: 105, rotation: 20 },
       { src: '/hero/ice-cube-1.svg', alt: 'Glaçon', depth: 0.4, initialX: '20%', initialY: '68%', size: 55, rotation: 35 },
       { src: '/hero/ice-cube-2.svg', alt: 'Glaçon', depth: 0.8, initialX: '80%', initialY: '68%', size: 70, rotation: -28 },
       { src: '/hero/drop-1.svg', alt: 'Goutte', depth: 0.5, initialX: '27%', initialY: '18%', size: 38, rotation: 14 },
