@@ -95,8 +95,8 @@ export const heroSlides: HeroSlide[] = [
     accentColor: '#E2553A',
     image: '/products/hero-drpepper-coconut.png',
     floatingElements: [
-      { src: '/hero/coconut-half.png', alt: 'Demi noix de coco', depth: 0.85, initialX: '18%', initialY: '32%', size: 110, rotation: -14 },
-      { src: '/hero/coconut-chunk.png', alt: 'Éclat de noix de coco et crème', depth: 0.8, initialX: '82%', initialY: '30%', size: 115, rotation: 18 },
+      { src: '/hero/coconut-half.png', alt: 'Demi noix de coco', depth: 0.85, initialX: '19%', initialY: '36%', size: 120, rotation: -12 },
+      { src: '/hero/coconut-chunk.png', alt: 'Éclats de noix de coco et crème', depth: 0.8, initialX: '81%', initialY: '34%', size: 125, rotation: 15 },
       { src: '/hero/ice-cube-1.svg', alt: 'Glaçon', depth: 0.4, initialX: '22%', initialY: '68%', size: 55, rotation: 30 },
       { src: '/hero/ice-cube-2.svg', alt: 'Glaçon', depth: 0.7, initialX: '80%', initialY: '66%', size: 70, rotation: -25 },
       { src: '/hero/drop-1.svg', alt: 'Goutte', depth: 0.5, initialX: '26%', initialY: '18%', size: 38, rotation: 12 },
