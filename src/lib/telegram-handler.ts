@@ -251,6 +251,112 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
     }
   }
 
+  // ── Livreur annule sa prise en charge : la commande repasse en "new" ──
+  if (data.startsWith('unclaim:')) {
+    const code = data.replace('unclaim:', '').trim().toUpperCase();
+    const releasableStatuses: Order['status'][] = ['taken', 'delivering', 'arriving'];
+
+    let existing: Order | null = null;
+    let items: OrderItem[] = [];
+    let order: Order | null = null;
+
+    if (isSupabaseConfigured) {
+      const client = getServiceRoleClient();
+      if (client) {
+        try {
+          const { data: dbExisting } = await client
+            .from('orders')
+            .select('*')
+            .eq('public_code', code)
+            .single();
+
+          if (dbExisting) {
+            existing = dbExisting as Order;
+            const { data: dbItems } = await client
+              .from('order_items')
+              .select('*')
+              .eq('order_id', dbExisting.id);
+            items = (dbItems as OrderItem[]) || [];
+          }
+        } catch (dbErr) {
+          console.error('[Telegram Handler] Supabase unclaim fetch error:', dbErr);
+        }
+      }
+    }
+
+    if (!existing) {
+      existing = getInMemoryOrderByCode(code);
+      items = existing?.items || [];
+    }
+
+    if (!existing) {
+      await answerCallbackQuery(callbackId, `Commande #${code} introuvable.`);
+      return false;
+    }
+
+    const isArrivedViaNotes = (existing.notes || '').includes('[ARRIVED]');
+    if (!releasableStatuses.includes(existing.status) && !isArrivedViaNotes) {
+      await answerCallbackQuery(
+        callbackId,
+        existing.status === 'new'
+          ? `Commande #${code} déjà disponible.`
+          : `Commande #${code} ne peut plus être annulée (${existing.status}).`
+      );
+      return false;
+    }
+
+    // Seul le livreur qui a pris la commande peut la relâcher
+    if (existing.assigned_driver && existing.assigned_driver !== driverName) {
+      await answerCallbackQuery(
+        callbackId,
+        `Seul ${existing.assigned_driver} peut annuler cette prise en charge.`
+      );
+      return false;
+    }
+
+    const cleanNotes = (existing.notes || '').replace('[ARRIVED]', '').trim();
+
+    if (isSupabaseConfigured) {
+      const client = getServiceRoleClient();
+      if (client) {
+        const { data: dbOrder, error: dbErr } = await client
+          .from('orders')
+          .update({ status: 'new', assigned_driver: null, notes: cleanNotes })
+          .eq('public_code', code)
+          .in('status', releasableStatuses)
+          .select('*')
+          .single();
+        if (dbErr) {
+          console.error('[Telegram Handler] Supabase unclaim update error:', dbErr);
+        } else if (dbOrder) {
+          order = dbOrder as Order;
+        }
+      }
+    }
+
+    if (!order) {
+      const mem = getInMemoryOrderByCode(code);
+      if (mem) {
+        mem.status = 'new';
+        mem.assigned_driver = null;
+        mem.notes = cleanNotes;
+        order = mem;
+      }
+    }
+
+    if (!order) {
+      await answerCallbackQuery(callbackId, `Impossible d'annuler la prise en charge de #${code}.`);
+      return false;
+    }
+
+    if (messageId) {
+      await updateTelegramOrderMessage(messageId, order, items, driverName);
+    }
+    await answerCallbackQuery(callbackId, `↩️ Prise en charge de #${code} annulée — commande remise en attente.`);
+    console.log(`[Telegram Handler] Order #${code} released by ${driverName} (status: new)`);
+    return true;
+  }
+
   if (data.startsWith('noop:')) {
     await answerCallbackQuery(callbackId, 'Cette commande a déjà été livrée.');
     return true;

@@ -48,3 +48,6 @@ next-env.d.ts
 test_*.png
 supabase/.temp/
 
+
+.vercel
+.env*

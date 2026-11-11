@@ -244,11 +244,16 @@ export default function CartDrawer() {
                 <span className="font-mono text-white">{formatPrice(subtotalCents)}</span>
               </div>
               <div className="flex justify-between text-text-muted">
-                <span>Livraison (Roanne & agglo)</span>
+                <span>
+                  Livraison
+                  <span className="block text-[11px] text-white/40">
+                    Roanne, Le Coteau, Riorges · +1,20 €/km au-delà
+                  </span>
+                </span>
                 {deliveryFeeCents === 0 ? (
                   <span className="font-semibold text-success">Offerte</span>
                 ) : (
-                  <span className="font-mono text-white">{formatPrice(deliveryFeeCents)}</span>
+                  <span className="font-mono text-white">dès {formatPrice(deliveryFeeCents)}</span>
                 )}
               </div>
               <div className="border-t border-white/10 pt-2 flex justify-between font-display text-xl text-white">

@@ -26,6 +26,18 @@ export const siteConfig = {
     allowedPostalCodes: ['42300', '42120', '42370', '42153'],
   },
 
+  /* Tarification de la livraison à la distance (voir src/lib/delivery-fee.ts) */
+  deliveryPricing: {
+    // Position GPS de la boutique (21 rue Anatole France)
+    shopLocation: { lat: 46.0319754, lon: 4.0857252 },
+    // Villes livrées au tarif de base (frais "standard" de l'admin)
+    zoneCities: ['Roanne', 'Le Coteau', 'Riorges'],
+    // Supplément par km hors zone
+    perKmCents: 120, // 1,20 €
+    // km de trajet inclus dans le tarif de base (couvre Roanne / Le Coteau / Riorges)
+    includedKm: 5,
+  },
+
   social: {
     snapchat: 'Amandefacile',
     instagram: '',

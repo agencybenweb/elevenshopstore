@@ -43,7 +43,12 @@ export function formatOrderTelegramMessage(
   )}, ${order.postal_code} ${escapeHtml(order.city)}</a>`;
 
   let statusHeader = `🚨 <b>NOUVELLE COMMANDE #${order.public_code}</b>`;
-  if ((order.status === 'taken' || order.status === 'delivering') && driverName) {
+  if (order.status === 'new' && driverName) {
+    // Order released back to the pool after a driver cancelled their claim
+    statusHeader = `🔁 <b>COMMANDE #${order.public_code} À NOUVEAU DISPONIBLE</b>\n<i>Prise en charge annulée par ${escapeHtml(
+      driverName
+    )}</i>`;
+  } else if ((order.status === 'taken' || order.status === 'delivering') && driverName) {
     statusHeader = `🛵 <b>COMMANDE #${order.public_code} PRISE EN CHARGE PAR ${escapeHtml(
       driverName.toUpperCase()
     )} (EN ROUTE)</b>`;
@@ -109,6 +114,11 @@ export function getInlineKeyboard(publicCode: string, status: string, driverName
     };
   }
 
+  const unclaimButton = {
+    text: '❌ Annuler la prise en charge',
+    callback_data: `unclaim:${publicCode}`,
+  };
+
   if (status === 'taken' || status === 'delivering') {
     return {
       inline_keyboard: [
@@ -118,6 +128,7 @@ export function getInlineKeyboard(publicCode: string, status: string, driverName
             callback_data: `arrive:${publicCode}`,
           },
         ],
+        [unclaimButton],
       ],
     };
   }
@@ -131,6 +142,7 @@ export function getInlineKeyboard(publicCode: string, status: string, driverName
             callback_data: `deliver:${publicCode}`,
           },
         ],
+        [unclaimButton],
       ],
     };
   }

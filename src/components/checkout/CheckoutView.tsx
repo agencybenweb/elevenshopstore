@@ -41,8 +41,7 @@ export default function CheckoutView() {
     removeAlcoholItems,
     totalItems,
     subtotalCents,
-    deliveryFeeCents,
-    totalCents,
+    deliveryFeeCents: cartDeliveryFeeCents,
     isMinOrderReached,
     missingForMinOrderCents,
     isFreeDelivery,
@@ -79,6 +78,54 @@ export default function CheckoutView() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [isAdultConfirmed, setIsAdultConfirmed] = useState(false);
   const [honeypot, setHoneypot] = useState('');
+
+  // Frais de livraison calculés selon l'adresse (zone de base + €/km au-delà)
+  const [deliveryQuote, setDeliveryQuote] = useState<{
+    feeCents: number;
+    extraKm: number;
+    distanceKm: number | null;
+    inZone: boolean;
+    estimated: boolean;
+  } | null>(null);
+  const [isQuoteLoading, setIsQuoteLoading] = useState(false);
+
+  useEffect(() => {
+    if (!/^\d{5}$/.test(postalCode.trim()) || city.trim().length < 2) {
+      setDeliveryQuote(null);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setIsQuoteLoading(true);
+      try {
+        const res = await fetch('/api/delivery-quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            address,
+            postal_code: postalCode,
+            city,
+            subtotal_cents: subtotalCents,
+          }),
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        if (res.ok && data.quote) setDeliveryQuote(data.quote);
+      } catch {
+        // abandon silencieux : on garde le tarif de base
+      } finally {
+        if (!controller.signal.aborted) setIsQuoteLoading(false);
+      }
+    }, 700);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [address, postalCode, city, subtotalCents]);
+
+  const deliveryFeeCents =
+    totalItems === 0 ? 0 : deliveryQuote ? deliveryQuote.feeCents : cartDeliveryFeeCents;
+  const totalCents = subtotalCents + deliveryFeeCents;
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -315,8 +362,17 @@ export default function CheckoutView() {
                   <span className="font-mono text-white">{formatPrice(subtotalCents)}</span>
                 </div>
                 <div className="flex justify-between text-text-muted">
-                  <span>Frais de livraison</span>
-                  {deliveryFeeCents === 0 ? (
+                  <span>
+                    Frais de livraison
+                    {deliveryQuote && deliveryQuote.extraKm > 0 && deliveryFeeCents > 0 && (
+                      <span className="block text-[11px] text-white/40">
+                        dont {deliveryQuote.extraKm.toString().replace('.', ',')} km hors zone × 1,20 €
+                      </span>
+                    )}
+                  </span>
+                  {isQuoteLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-white/50" />
+                  ) : deliveryFeeCents === 0 ? (
                     <span className="font-semibold text-success">Offert</span>
                   ) : (
                     <span className="font-mono text-white">{formatPrice(deliveryFeeCents)}</span>

@@ -7,6 +7,7 @@ import { saveInMemoryOrder } from '@/lib/orders-store';
 import { Order, OrderItem } from '@/types/database';
 import { ensureTelegramPollerStarted } from '@/lib/telegram-poller';
 import { isAlcoholItem } from '@/lib/alcohol';
+import { computeDeliveryQuote } from '@/lib/delivery-fee';
 
 // Simple IP rate limit cache: IP -> timestamp[]
 const ipRateLimits = new Map<string, number[]>();
@@ -186,8 +187,19 @@ export async function POST(req: NextRequest) {
     }
 
     // 9. Calculate Delivery Fee
-    const isFreeDelivery = subtotalCents >= settings.free_delivery_above_cents;
-    const deliveryFeeCents = isFreeDelivery ? 0 : settings.delivery_fee_cents;
+    // Frais de base dans la zone Roanne / Le Coteau / Riorges, + €/km au-delà
+    const quote = await computeDeliveryQuote({
+      address: input.address,
+      postalCode: input.postal_code,
+      city: input.city,
+      subtotalCents,
+      baseFeeCents: settings.delivery_fee_cents,
+      freeDeliveryAboveCents: settings.free_delivery_above_cents,
+    });
+    if (quote.estimated) {
+      console.warn(`[Orders] Distance non calculée pour ${input.postal_code} ${input.city} — frais de base appliqués.`);
+    }
+    const deliveryFeeCents = quote.feeCents;
     const totalCents = subtotalCents + deliveryFeeCents;
 
     // 10. Generate public code and order object
