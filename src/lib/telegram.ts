@@ -56,6 +56,9 @@ export function formatOrderTelegramMessage(
     statusHeader = `🏁 <b>COMMANDE #${order.public_code} — ${escapeHtml(
       driverName.toUpperCase()
     )} EST ARRIVÉ</b>`;
+  } else if (order.status === 'cancelled') {
+    statusHeader = `❌ <b>COMMANDE #${order.public_code} ANNULÉE PAR LE CLIENT</b>
+<i>Ne pas livrer.</i>`;
   } else if (order.status === 'delivered') {
     statusHeader = `✅ <b>COMMANDE #${order.public_code} LIVRÉE PAR ${escapeHtml(
       (driverName || order.assigned_driver || 'LE LIVREUR').toUpperCase()
@@ -147,7 +150,15 @@ export function getInlineKeyboard(publicCode: string, status: string, driverName
     };
   }
 
-  // delivered or cancelled -> no active buttons
+  if (status === 'cancelled') {
+    return {
+      inline_keyboard: [
+        [{ text: '❌ Commande annulée par le client', callback_data: `noop:${publicCode}` }],
+      ],
+    };
+  }
+
+  // delivered -> no active buttons
   return {
     inline_keyboard: [
       [
@@ -197,6 +208,43 @@ export async function sendTelegramOrderNotification(
   } catch (err: any) {
     console.error('[Telegram] Network error:', err);
     return { success: false, error: err?.message || 'Network error' };
+  }
+}
+
+/** Alerte le groupe quand un client annule sa commande depuis le site */
+export async function sendTelegramCancellationNotice(
+  order: Order,
+  items: OrderItem[],
+  previousDriver?: string | null
+): Promise<boolean> {
+  if (!isTelegramConfigured()) return false;
+
+  const itemsText = items
+    .map((i) => `• ${i.quantity}× ${escapeHtml(i.product_name)}`)
+    .join('\n');
+  let text = `❌ <b>COMMANDE #${order.public_code} ANNULÉE PAR LE CLIENT</b>
+
+👤 ${escapeHtml(order.client_name)} — ${escapeHtml(order.city)}
+💎 ${formatPrice(order.total_cents)}`;
+  if (itemsText) text += `
+${itemsText}`;
+  if (previousDriver) {
+    text += `
+
+🛵 <b>${escapeHtml(previousDriver)}</b>, la commande était prise en charge : ne pas livrer, retour en boutique.`;
+  }
+
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' }),
+    });
+    const data = await res.json();
+    return Boolean(data.ok);
+  } catch (err) {
+    console.error('[Telegram] Error sending cancellation notice:', err);
+    return false;
   }
 }
 

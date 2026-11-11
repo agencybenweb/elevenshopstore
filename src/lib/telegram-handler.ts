@@ -22,12 +22,54 @@ export async function answerCallbackQuery(callbackQueryId: string, text: string)
   }
 }
 
+async function fetchOrderWithItems(
+  code: string
+): Promise<{ order: Order; items: OrderItem[] } | null> {
+  if (isSupabaseConfigured) {
+    const client = getServiceRoleClient();
+    if (client) {
+      try {
+        const { data: dbOrder } = await client
+          .from('orders')
+          .select('*')
+          .eq('public_code', code)
+          .single();
+        if (dbOrder) {
+          const { data: dbItems } = await client
+            .from('order_items')
+            .select('*')
+            .eq('order_id', dbOrder.id);
+          return { order: dbOrder as Order, items: (dbItems as OrderItem[]) || [] };
+        }
+      } catch (err) {
+        console.error('[Telegram Handler] Supabase fetch error:', err);
+      }
+    }
+  }
+  const mem = getInMemoryOrderByCode(code);
+  return mem ? { order: mem, items: mem.items || [] } : null;
+}
+
 export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<boolean> {
   if (!callbackQuery || !callbackQuery.data) return false;
 
   const { id: callbackId, data, from, message } = callbackQuery;
   const driverName = from?.first_name || from?.username || 'Livreur';
   const messageId = message?.message_id;
+
+  // ── Garde : commande annulée par le client → plus aucune action livreur ──
+  const actionMatch = /^(claim|arrive|deliver|unclaim):(.+)$/.exec(data);
+  if (actionMatch) {
+    const code = actionMatch[2].trim().toUpperCase();
+    const current = await fetchOrderWithItems(code);
+    if (current?.order.status === 'cancelled') {
+      if (messageId) {
+        await updateTelegramOrderMessage(messageId, current.order, current.items, current.order.assigned_driver);
+      }
+      await answerCallbackQuery(callbackId, `❌ Commande #${code} annulée par le client — ne pas livrer.`);
+      return true;
+    }
+  }
 
   if (data.startsWith('claim:')) {
     const code = data.replace('claim:', '').trim().toUpperCase();
@@ -358,7 +400,14 @@ export async function handleTelegramCallbackQuery(callbackQuery: any): Promise<b
   }
 
   if (data.startsWith('noop:')) {
-    await answerCallbackQuery(callbackId, 'Cette commande a déjà été livrée.');
+    const code = data.replace('noop:', '').trim().toUpperCase();
+    const current = await fetchOrderWithItems(code);
+    await answerCallbackQuery(
+      callbackId,
+      current?.order.status === 'cancelled'
+        ? 'Cette commande a été annulée par le client.'
+        : 'Cette commande a déjà été livrée.'
+    );
     return true;
   }
 

@@ -195,6 +195,15 @@ export default function CheckoutView() {
         throw new Error(data.error || 'Une erreur est survenue lors de la commande.');
       }
 
+      // Jeton permettant au client d'annuler sa commande depuis la page de suivi
+      if (data.cancel_token) {
+        try {
+          localStorage.setItem(`eleven_cancel_${data.public_code}`, data.cancel_token);
+        } catch {
+          // stockage indisponible (navigation privée) : pas d'annulation en ligne
+        }
+      }
+
       // Success: clear cart and redirect to confirmation
       clearCart();
       router.push(`/confirmation/${data.public_code}`);

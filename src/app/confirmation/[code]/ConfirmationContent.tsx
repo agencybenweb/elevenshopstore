@@ -22,6 +22,7 @@ import {
   Loader2,
   Sparkles,
   Radio,
+  XCircle,
 } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 
@@ -108,6 +109,20 @@ export default function ConfirmationContent({
     text: string;
     step: number;
   } | null>(null);
+
+  // Annulation client (jeton stocké par ce navigateur au moment de la commande)
+  const [cancelToken, setCancelToken] = useState<string | null>(null);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      setCancelToken(localStorage.getItem(`eleven_cancel_${code.toUpperCase()}`));
+    } catch {
+      setCancelToken(null);
+    }
+  }, [code]);
 
   const prevStatusRef = useRef<Order['status'] | null>(null);
   const isFirstLoadRef = useRef(true);
@@ -198,6 +213,39 @@ export default function ConfirmationContent({
     };
   }, [fetchOrder, order?.status]);
 
+  const handleCancelOrder = async () => {
+    if (!cancelToken) return;
+    setIsCancelling(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/orders/${code}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: cancelToken }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "L'annulation a échoué.");
+      }
+      if (data.order) {
+        setOrder(data.order);
+        prevStatusRef.current = data.order.status;
+      }
+      setConfirmingCancel(false);
+    } catch (err: any) {
+      setCancelError(err.message || "L'annulation a échoué. Appelez l'épicerie.");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const isCancelled = order?.status === 'cancelled';
+  const canCancel =
+    Boolean(cancelToken) &&
+    Boolean(order) &&
+    ['new', 'taken', 'delivering'].includes(order!.status) &&
+    !order!.notes?.includes('[ARRIVED]');
+
   const copyCode = () => {
     navigator.clipboard.writeText(code);
     setCopied(true);
@@ -211,18 +259,37 @@ export default function ConfirmationContent({
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         {/* ── Success Header ──────────────────── */}
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary shadow-glow">
-            <CheckCircle2 className="h-10 w-10" />
-          </div>
-          <span className="inline-block rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-semibold text-primary mb-2">
-            Commande enregistrée avec succès
-          </span>
-          <h1 className="font-display text-3xl tracking-wide text-white md:text-5xl">
-            MERCI POUR VOTRE COMMANDE !
-          </h1>
-          <p className="mt-2 text-sm text-text-muted">
-            Le patron et les livreurs d'Eleven Shop ont été notifiés sur Telegram.
-          </p>
+          {isCancelled ? (
+            <>
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-error/10 text-error">
+                <XCircle className="h-10 w-10" />
+              </div>
+              <span className="inline-block rounded-full bg-error/10 border border-error/30 px-3 py-1 text-xs font-semibold text-error mb-2">
+                Commande annulée
+              </span>
+              <h1 className="font-display text-3xl tracking-wide text-white md:text-5xl">
+                COMMANDE ANNULÉE
+              </h1>
+              <p className="mt-2 text-sm text-text-muted">
+                Votre commande a bien été annulée et l&apos;équipe a été prévenue. Rien ne vous sera facturé.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary shadow-glow">
+                <CheckCircle2 className="h-10 w-10" />
+              </div>
+              <span className="inline-block rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-semibold text-primary mb-2">
+                Commande enregistrée avec succès
+              </span>
+              <h1 className="font-display text-3xl tracking-wide text-white md:text-5xl">
+                MERCI POUR VOTRE COMMANDE !
+              </h1>
+              <p className="mt-2 text-sm text-text-muted">
+                Le patron et les livreurs d'Eleven Shop ont été notifiés sur Telegram.
+              </p>
+            </>
+          )}
 
           {/* Code pill */}
           <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-white/10 bg-surface-elevated px-5 py-2.5">
@@ -421,6 +488,57 @@ export default function ConfirmationContent({
                 </div>
               )}
             </div>
+          )}
+
+          {/* Annulation par le client */}
+          {canCancel && (
+            <div className="mt-4">
+              {!confirmingCancel ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCancelError(null);
+                    setConfirmingCancel(true);
+                  }}
+                  className="w-full rounded-full border border-error/40 px-4 py-2.5 text-xs font-semibold text-error/90 hover:bg-error/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  <XCircle className="h-4 w-4" />
+                  <span>Annuler ma commande</span>
+                </button>
+              ) : (
+                <div className="rounded-2xl border border-error/40 bg-error/10 p-4 text-center">
+                  <p className="text-sm font-semibold text-white">Annuler la commande #{code} ?</p>
+                  <p className="mt-1 text-xs text-text-muted">
+                    {order?.assigned_driver
+                      ? `${order.assigned_driver} est déjà en route : il sera prévenu immédiatement.`
+                      : 'Les livreurs seront prévenus immédiatement.'}{' '}
+                    Cette action est définitive.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingCancel(false)}
+                      disabled={isCancelling}
+                      className="btn-pill btn-pill-outline flex-1 py-2.5 text-xs"
+                    >
+                      Garder ma commande
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelOrder}
+                      disabled={isCancelling}
+                      className="flex-1 rounded-full bg-error px-4 py-2.5 text-xs font-bold text-white hover:bg-error/90 disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      {isCancelling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      <span>Oui, annuler</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {cancelError && (
+            <p className="mt-3 text-center text-xs text-error">{cancelError}</p>
           )}
         </div>
 

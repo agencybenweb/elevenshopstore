@@ -8,6 +8,7 @@ import { Order, OrderItem } from '@/types/database';
 import { ensureTelegramPollerStarted } from '@/lib/telegram-poller';
 import { isAlcoholItem } from '@/lib/alcohol';
 import { computeDeliveryQuote } from '@/lib/delivery-fee';
+import { createCancelToken } from '@/lib/order-token';
 
 // Simple IP rate limit cache: IP -> timestamp[]
 const ipRateLimits = new Map<string, number[]>();
@@ -307,6 +308,7 @@ export async function POST(req: NextRequest) {
       success: true,
       public_code: publicCode,
       order: orderRecord,
+      cancel_token: createCancelToken(orderRecord.id, publicCode),
     });
   } catch (err: any) {
     console.error('[POST /api/orders] Unexpected error:', err);
