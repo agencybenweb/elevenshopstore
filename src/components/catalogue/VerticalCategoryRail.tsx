@@ -39,6 +39,12 @@ export default function VerticalCategoryRail({
   // aisle under the finger while scrubbing (index into the catalogue sections)
   const [scrubCatId, setScrubCatId] = useState<string | null>(null);
   const lastScrubIndexRef = useRef<number>(-1);
+  // aisles captured when a drag starts (ids + where each section starts), so nothing is measured mid-drag
+  const [scrubIds, setScrubIds] = useState<string[]>([]);
+  const scrubTargetsRef = useRef<number[]>([]);
+  const scrubIdListRef = useRef<string[]>([]);
+  const scrubTrackRef = useRef<{ top: number; length: number }>({ top: 110, length: 1 });
+  const scrubFractionRef = useRef<number>(0);
   // true for a moment after release, so the droplet glides back to its scroll-progress spot
   const [isGliding, setIsGliding] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -208,29 +214,45 @@ export default function VerticalCategoryRail({
     else window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior }); // 'instant': html has scroll-behavior: smooth
   };
 
-  // Contacts-style index: the track is split evenly between the aisles; the page only jumps when
-  // the finger enters another aisle (a dozen jumps at most instead of a repaint on every pixel).
-  const scrubTo = (clientY: number) => {
-    const el = handleRef.current;
-    const y = Math.min(window.innerHeight - HANDLE_TRACK_BOTTOM, Math.max(HANDLE_TRACK_TOP, clientY));
-    if (el) el.style.top = `${y}px`;
-    const f = (y - HANDLE_TRACK_TOP) / trackLength();
+  // Contacts-style index picker. While the finger moves, the PAGE DOES NOT MOVE: a glass overlay lists the
+  // aisles and highlights the one under the finger. The page jumps once, on release.
+  // (Jumping live made iOS Safari blank out the product images and shake the layout.)
+  const startScrub = () => {
     const sections = Array.from(document.querySelectorAll<HTMLElement>('[id^="cat-section-"]'));
-    if (sections.length > 0) {
-      const i = Math.min(sections.length - 1, Math.floor(f * sections.length));
-      if (i === lastScrubIndexRef.current) return;
-      lastScrubIndexRef.current = i;
-      const sec = sections[i];
-      jumpTo(sec.getBoundingClientRect().top + window.scrollY - 110);
-      setScrubCatId(sec.id.replace('cat-section-', ''));
-      try {
-        if ('vibrate' in navigator) navigator.vibrate(8); // light tick per aisle (Android)
-      } catch {
-        // ignore
-      }
-    } else {
-      // filtered list / search results: plain proportional scroll
-      jumpTo(f * (document.documentElement.scrollHeight - window.innerHeight));
+    scrubIdListRef.current = sections.map((sec) => sec.id.replace('cat-section-', ''));
+    setScrubIds(scrubIdListRef.current);
+    scrubTargetsRef.current = sections.map((sec) => sec.getBoundingClientRect().top + window.scrollY - 110);
+    scrubTrackRef.current = { top: HANDLE_TRACK_TOP, length: trackLength() }; // frozen: iOS toolbars resize the viewport
+    lastScrubIndexRef.current = -1;
+  };
+
+  const scrubTo = (clientY: number) => {
+    const { top, length } = scrubTrackRef.current;
+    const y = Math.min(top + length, Math.max(top, clientY));
+    const el = handleRef.current;
+    if (el) el.style.top = `${y}px`;
+    const f = (y - top) / length;
+    scrubFractionRef.current = f;
+    const n = scrubTargetsRef.current.length;
+    if (n === 0) return;
+    const i = Math.min(n - 1, Math.floor(f * n));
+    if (i === lastScrubIndexRef.current) return;
+    lastScrubIndexRef.current = i;
+    setScrubCatId(scrubIdListRef.current[i] ?? null);
+    try {
+      if ('vibrate' in navigator) navigator.vibrate(8); // light tick per aisle (Android)
+    } catch {
+      // ignore
+    }
+  };
+
+  const finishScrub = () => {
+    const n = scrubTargetsRef.current.length;
+    if (n > 0 && lastScrubIndexRef.current >= 0) {
+      jumpTo(scrubTargetsRef.current[lastScrubIndexRef.current]);
+    } else if (n === 0) {
+      // filtered list / search results: proportional jump
+      jumpTo(scrubFractionRef.current * (document.documentElement.scrollHeight - window.innerHeight));
     }
   };
 
@@ -311,6 +333,7 @@ export default function VerticalCategoryRail({
       openFromHandle(); // a simple tap still unrolls the rail
       return;
     }
+    finishScrub();
     setIsDragging(false);
     setScrubCatId(null);
     lastScrubIndexRef.current = -1;
@@ -348,7 +371,7 @@ export default function VerticalCategoryRail({
           d.moved = true;
           isDraggingRef.current = true;
           setIsDragging(true);
-          lastScrubIndexRef.current = -1;
+          startScrub();
           if (wakeUpTimerRef.current) {
             clearTimeout(wakeUpTimerRef.current);
             wakeUpTimerRef.current = null;
@@ -396,30 +419,57 @@ export default function VerticalCategoryRail({
           boxShadow: 'inset 0 1.5px 2px rgba(255, 255, 255, 0.6)',
         }}
       >
-        {activeItem.icon}
+        {isDragging ? scrubItem.icon : activeItem.icon}
       </span>
 
-      {/* While scrubbing: the aisle you are flying over, in a glass pill next to the finger */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute right-full top-1/2 mr-3 flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold text-white"
-        style={{
-          transform: `translateY(-50%) translateX(${isDragging ? 0 : 12}px) scale(${isDragging ? 1 : 0.9})`,
-          opacity: isDragging ? 1 : 0,
-          transition: 'opacity 180ms ease-out, transform 260ms cubic-bezier(0.34, 1.6, 0.5, 1)',
-          background:
-            'linear-gradient(135deg, rgba(255, 75, 130, 0.40) 0%, rgba(18, 18, 24, 0.90) 60%, rgba(255, 75, 130, 0.25) 100%)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: '1px solid rgba(255, 150, 190, 0.50)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 0 25px rgba(255, 46, 99, 0.35)',
-        }}
-      >
-        <span>{scrubItem.icon}</span>
-        <span>{scrubItem.name}</span>
-        <span className="rounded-full bg-white/15 px-2 py-0.5 font-mono text-xs">{scrubItem.count}</span>
-      </span>
     </button>
+
+    {/* Scrub picker: dark veil (no backdrop blur: too heavy over the catalogue on iOS) + the aisles,
+        the one under the finger blown up in pink liquid glass */}
+    <div
+      aria-hidden
+      className="fixed inset-0 z-[39] flex items-center pointer-events-none"
+      style={{
+        background: 'radial-gradient(120% 80% at 85% 50%, rgba(40, 8, 22, 0.92) 0%, rgba(8, 8, 10, 0.9) 70%)',
+        opacity: isDragging ? 1 : 0,
+        transition: isDragging ? 'opacity 160ms ease-out' : 'opacity 260ms ease-in 60ms',
+      }}
+    >
+      <ul className="ml-5 mr-24 flex w-full flex-col gap-1.5">
+        {scrubIds.map((id, i) => {
+          const item = allCategoriesList.find((c) => c.id === id);
+          if (!item) return null;
+          const on = id === scrubCatId;
+          return (
+            <li
+              key={id}
+              className="flex items-center gap-3 rounded-full px-4 py-2 whitespace-nowrap"
+              style={{
+                transform: `translate3d(${on ? 0 : -6}px, 0, 0) scale(${on ? 1.05 : 1})`,
+                transformOrigin: 'left center',
+                opacity: isDragging ? (on ? 1 : 0.45) : 0,
+                transition: `transform 260ms cubic-bezier(0.34, 1.6, 0.5, 1), opacity 200ms ease-out ${isDragging ? i * 18 : 0}ms, background 200ms`,
+                ...(on
+                  ? {
+                      background:
+                        'linear-gradient(135deg, rgba(255, 75, 130, 0.45) 0%, rgba(30, 14, 22, 0.95) 60%, rgba(255, 75, 130, 0.28) 100%)',
+                      border: '1px solid rgba(255, 150, 190, 0.55)',
+                      boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.45), 0 6px 24px rgba(255, 46, 99, 0.35)',
+                    }
+                  : { border: '1px solid transparent' }),
+              }}
+            >
+              <span className="text-2xl leading-none">{item.icon}</span>
+              <span className={`truncate font-bold ${on ? 'text-lg text-white' : 'text-base text-white/80'}`}>{item.name}</span>
+              <span className={`ml-auto rounded-full px-2 py-0.5 font-mono text-xs font-bold ${on ? 'bg-white/20 text-white' : 'text-white/40'}`}>
+                {item.count}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+
     <nav
       aria-label="Navigation rapide par rayon"
       onMouseEnter={() => {
