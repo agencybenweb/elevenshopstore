@@ -35,8 +35,12 @@ export default function VerticalCategoryRail({
   // It sits on a track along the right edge at the page's scroll progress; dragging it scrolls the page.
   const HANDLE_TRACK_TOP = 110; // below the header
   const HANDLE_TRACK_BOTTOM = 110; // above the floating cart bar
-  const [scrollProgress, setScrollProgress] = useState<number | null>(null);
-  const [viewportHeight, setViewportHeight] = useState<number>(0);
+  const handleRef = useRef<HTMLButtonElement>(null);
+  // aisle under the finger while scrubbing (index into the catalogue sections)
+  const [scrubCatId, setScrubCatId] = useState<string | null>(null);
+  const lastScrubIndexRef = useRef<number>(-1);
+  // true for a moment after release, so the droplet glides back to its scroll-progress spot
+  const [isGliding, setIsGliding] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const isDraggingRef = useRef<boolean>(false);
   const dragRef = useRef<{ startY: number; moved: boolean } | null>(null);
@@ -170,14 +174,19 @@ export default function VerticalCategoryRail({
     };
   }, []);
 
-  // Track scroll progress (0 -> 1) so the handle rides along the right edge like a scrollbar thumb
+  const trackLength = () => Math.max(1, window.innerHeight - HANDLE_TRACK_TOP - HANDLE_TRACK_BOTTOM);
+
+  // Keep the droplet at the page's scroll progress, like a scrollbar thumb.
+  // Written straight to the DOM once per frame: no React re-render and no CSS transition on `top` (those made it stutter).
   useEffect(() => {
     let frame = 0;
     const update = () => {
       frame = 0;
+      const el = handleRef.current;
+      if (!el || isDraggingRef.current) return;
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      setViewportHeight(window.innerHeight);
-      setScrollProgress(max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0);
+      const f = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      el.style.top = `${HANDLE_TRACK_TOP + f * trackLength()}px`;
     };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
@@ -192,14 +201,37 @@ export default function VerticalCategoryRail({
     };
   }, []);
 
+  const jumpTo = (y: number) => {
+    // go through Lenis when it is running so it does not drag the page back to its own position
+    const lenis = (window as unknown as { __lenis?: { scrollTo: (t: number, o: object) => void } }).__lenis;
+    if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+    else window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior }); // 'instant': html has scroll-behavior: smooth
+  };
+
+  // Contacts-style index: the track is split evenly between the aisles; the page only jumps when
+  // the finger enters another aisle (a dozen jumps at most instead of a repaint on every pixel).
   const scrubTo = (clientY: number) => {
-    const h = window.innerHeight;
-    const track = Math.max(1, h - HANDLE_TRACK_TOP - HANDLE_TRACK_BOTTOM);
-    const f = Math.min(1, Math.max(0, (clientY - HANDLE_TRACK_TOP) / track));
-    const max = document.documentElement.scrollHeight - h;
-    // 'instant': html has scroll-behavior: smooth, which would make the page lag behind the finger
-    window.scrollTo({ top: f * max, behavior: 'instant' as ScrollBehavior });
-    setScrollProgress(f);
+    const el = handleRef.current;
+    const y = Math.min(window.innerHeight - HANDLE_TRACK_BOTTOM, Math.max(HANDLE_TRACK_TOP, clientY));
+    if (el) el.style.top = `${y}px`;
+    const f = (y - HANDLE_TRACK_TOP) / trackLength();
+    const sections = Array.from(document.querySelectorAll<HTMLElement>('[id^="cat-section-"]'));
+    if (sections.length > 0) {
+      const i = Math.min(sections.length - 1, Math.floor(f * sections.length));
+      if (i === lastScrubIndexRef.current) return;
+      lastScrubIndexRef.current = i;
+      const sec = sections[i];
+      jumpTo(sec.getBoundingClientRect().top + window.scrollY - 110);
+      setScrubCatId(sec.id.replace('cat-section-', ''));
+      try {
+        if ('vibrate' in navigator) navigator.vibrate(8); // light tick per aisle (Android)
+      } catch {
+        // ignore
+      }
+    } else {
+      // filtered list / search results: plain proportional scroll
+      jumpTo(f * (document.documentElement.scrollHeight - window.innerHeight));
+    }
   };
 
   const allCategoriesList = [
@@ -269,21 +301,7 @@ export default function VerticalCategoryRail({
     }, 3500);
   };
 
-  // small haptic tick when crossing into another aisle while scrubbing (Android)
-  useEffect(() => {
-    if (isDraggingRef.current && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      try {
-        navigator.vibrate(8);
-      } catch {
-        // ignore
-      }
-    }
-  }, [activeCategory]);
-
-  const handleTop =
-    scrollProgress === null || !viewportHeight
-      ? 'calc(50% + 40px)'
-      : `${HANDLE_TRACK_TOP + scrollProgress * Math.max(0, viewportHeight - HANDLE_TRACK_TOP - HANDLE_TRACK_BOTTOM)}px`;
+  const scrubItem = (scrubCatId && allCategoriesList.find((c) => c.id === scrubCatId)) || activeItem;
 
   const endDrag = () => {
     const d = dragRef.current;
@@ -294,9 +312,15 @@ export default function VerticalCategoryRail({
       return;
     }
     setIsDragging(false);
+    setScrubCatId(null);
+    lastScrubIndexRef.current = -1;
+    // glide the droplet from the finger back to the scroll-progress position
+    setIsGliding(true);
+    setTimeout(() => setIsGliding(false), 450);
     // let the last scroll events pass before the rail may react to scrolling again
     setTimeout(() => {
       isDraggingRef.current = false;
+      window.dispatchEvent(new Event('scroll'));
     }, 200);
   };
 
@@ -305,6 +329,7 @@ export default function VerticalCategoryRail({
     {/* Retracted state: a small liquid-glass droplet on the right edge with the current aisle.
         Tap = unroll the rail. Press and drag up/down = fast-scroll through the whole catalogue */}
     <button
+      ref={handleRef}
       onClick={(e) => {
         if (e.detail === 0) openFromHandle(); // keyboard activation only; taps are handled on pointer up
       }}
@@ -323,6 +348,7 @@ export default function VerticalCategoryRail({
           d.moved = true;
           isDraggingRef.current = true;
           setIsDragging(true);
+          lastScrubIndexRef.current = -1;
           if (wakeUpTimerRef.current) {
             clearTimeout(wakeUpTimerRef.current);
             wakeUpTimerRef.current = null;
@@ -338,7 +364,7 @@ export default function VerticalCategoryRail({
       }}
       className="fixed z-40 flex items-center gap-1 rounded-l-full py-1.5 pl-1.5 pr-2 cursor-pointer select-none"
       style={{
-        top: handleTop,
+        top: 'calc(50% + 40px)', // replaced by the scroll-progress position as soon as it mounts
         right: 0,
         touchAction: 'none',
         transform: isRetracted
@@ -349,8 +375,8 @@ export default function VerticalCategoryRail({
         transition: isDragging
           ? 'transform 200ms cubic-bezier(0.34, 1.6, 0.5, 1)'
           : isRetracted
-            ? 'top 160ms ease-out, transform 600ms cubic-bezier(0.34, 1.6, 0.5, 1) 420ms, opacity 250ms ease-out 420ms'
-            : 'top 160ms ease-out, transform 220ms ease-in, opacity 160ms ease-in',
+            ? `transform 600ms cubic-bezier(0.34, 1.6, 0.5, 1) 420ms, opacity 250ms ease-out 420ms${isGliding ? ', top 300ms ease-out' : ''}`
+            : 'transform 220ms ease-in, opacity 160ms ease-in',
         background: 'rgba(255, 255, 255, 0.06)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
@@ -389,9 +415,9 @@ export default function VerticalCategoryRail({
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 0 25px rgba(255, 46, 99, 0.35)',
         }}
       >
-        <span>{activeItem.icon}</span>
-        <span>{activeItem.name}</span>
-        <span className="rounded-full bg-white/15 px-2 py-0.5 font-mono text-xs">{activeItem.count}</span>
+        <span>{scrubItem.icon}</span>
+        <span>{scrubItem.name}</span>
+        <span className="rounded-full bg-white/15 px-2 py-0.5 font-mono text-xs">{scrubItem.count}</span>
       </span>
     </button>
     <nav

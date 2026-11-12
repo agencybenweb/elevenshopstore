@@ -28,6 +28,8 @@ export default function SmoothScroll({
     });
 
     lenisRef.current = lenis;
+    // shared with components that need to jump instantly (catalogue fast-scroll handle)
+    (window as unknown as { __lenis?: Lenis }).__lenis = lenis;
 
     function raf(time: number) {
       lenis.raf(time);
@@ -38,6 +40,7 @@ export default function SmoothScroll({
     return () => {
       lenis.destroy();
       lenisRef.current = null;
+      delete (window as unknown as { __lenis?: Lenis }).__lenis;
     };
   }, [enabled]);
 
