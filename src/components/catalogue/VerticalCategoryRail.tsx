@@ -31,6 +31,16 @@ export default function VerticalCategoryRail({
   const isHoveredRef = useRef<boolean>(false);
   const isClickActionRef = useRef<boolean>(false);
 
+  // Fast-scroll handle (phone): the retracted droplet doubles as a scrubber.
+  // It sits on a track along the right edge at the page's scroll progress; dragging it scrolls the page.
+  const HANDLE_TRACK_TOP = 110; // below the header
+  const HANDLE_TRACK_BOTTOM = 110; // above the floating cart bar
+  const [scrollProgress, setScrollProgress] = useState<number | null>(null);
+  const [viewportHeight, setViewportHeight] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const isDraggingRef = useRef<boolean>(false);
+  const dragRef = useRef<{ startY: number; moved: boolean } | null>(null);
+
   const isMouseDevice = () => {
     return (
       typeof window !== 'undefined' &&
@@ -67,6 +77,8 @@ export default function VerticalCategoryRail({
 
     // During programmatic smooth scroll triggered by click, let the clicked label stay visible for 1.5s
     if (isClickActionRef.current) return;
+    // Scrubbing with the handle: keep the rail rolled up
+    if (isDraggingRef.current) return;
 
     if (isRetractedRef.current) {
       // ── BAR IS CURRENTLY RETRACTED ──────────────────────────────────────────
@@ -158,6 +170,38 @@ export default function VerticalCategoryRail({
     };
   }, []);
 
+  // Track scroll progress (0 -> 1) so the handle rides along the right edge like a scrollbar thumb
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      setViewportHeight(window.innerHeight);
+      setScrollProgress(max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  const scrubTo = (clientY: number) => {
+    const h = window.innerHeight;
+    const track = Math.max(1, h - HANDLE_TRACK_TOP - HANDLE_TRACK_BOTTOM);
+    const f = Math.min(1, Math.max(0, (clientY - HANDLE_TRACK_TOP) / track));
+    const max = document.documentElement.scrollHeight - h;
+    // 'instant': html has scroll-behavior: smooth, which would make the page lag behind the finger
+    window.scrollTo({ top: f * max, behavior: 'instant' as ScrollBehavior });
+    setScrollProgress(f);
+  };
+
   const allCategoriesList = [
     {
       id: 'all',
@@ -225,25 +269,88 @@ export default function VerticalCategoryRail({
     }, 3500);
   };
 
+  // small haptic tick when crossing into another aisle while scrubbing (Android)
+  useEffect(() => {
+    if (isDraggingRef.current && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(8);
+      } catch {
+        // ignore
+      }
+    }
+  }, [activeCategory]);
+
+  const handleTop =
+    scrollProgress === null || !viewportHeight
+      ? 'calc(50% + 40px)'
+      : `${HANDLE_TRACK_TOP + scrollProgress * Math.max(0, viewportHeight - HANDLE_TRACK_TOP - HANDLE_TRACK_BOTTOM)}px`;
+
+  const endDrag = () => {
+    const d = dragRef.current;
+    dragRef.current = null;
+    if (!d) return;
+    if (!d.moved) {
+      openFromHandle(); // a simple tap still unrolls the rail
+      return;
+    }
+    setIsDragging(false);
+    // let the last scroll events pass before the rail may react to scrolling again
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 200);
+  };
+
   return (
     <>
-    {/* Retracted state on touch screens: a small liquid-glass droplet on the right edge with the current aisle */}
+    {/* Retracted state: a small liquid-glass droplet on the right edge with the current aisle.
+        Tap = unroll the rail. Press and drag up/down = fast-scroll through the whole catalogue */}
     <button
-      onClick={openFromHandle}
-      aria-label={`Ouvrir les rayons (rayon actuel : ${activeItem.name})`}
-      onMouseEnter={() => {
-        if (isMouseDevice()) openFromHandle();
+      onClick={(e) => {
+        if (e.detail === 0) openFromHandle(); // keyboard activation only; taps are handled on pointer up
       }}
-      className="fixed z-40 flex items-center gap-1 rounded-l-full py-1.5 pl-1.5 pr-2 active:scale-95 cursor-pointer"
+      onPointerDown={(e) => {
+        dragRef.current = { startY: e.clientY, moved: false };
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId); // keep receiving moves even when the finger leaves the droplet
+        } catch {
+          // ignore
+        }
+      }}
+      onPointerMove={(e) => {
+        const d = dragRef.current;
+        if (!d) return;
+        if (!d.moved && Math.abs(e.clientY - d.startY) > 6) {
+          d.moved = true;
+          isDraggingRef.current = true;
+          setIsDragging(true);
+          if (wakeUpTimerRef.current) {
+            clearTimeout(wakeUpTimerRef.current);
+            wakeUpTimerRef.current = null;
+          }
+        }
+        if (d.moved) scrubTo(e.clientY);
+      }}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      aria-label={`Ouvrir les rayons (rayon actuel : ${activeItem.name}). Glisser pour défiler`}
+      onMouseEnter={() => {
+        if (isMouseDevice() && !dragRef.current) openFromHandle();
+      }}
+      className="fixed z-40 flex items-center gap-1 rounded-l-full py-1.5 pl-1.5 pr-2 cursor-pointer select-none"
       style={{
-        top: 'calc(50% + 40px)',
+        top: handleTop,
         right: 0,
-        transform: isRetracted ? 'translate3d(0, -50%, 0) scale(1)' : 'translate3d(110%, -50%, 0) scale(0.6)',
+        touchAction: 'none',
+        transform: isRetracted
+          ? `translate3d(0, -50%, 0) scale(${isDragging ? 1.15 : 1})`
+          : 'translate3d(110%, -50%, 0) scale(0.6)',
         opacity: isRetracted ? 1 : 0,
         pointerEvents: isRetracted ? 'auto' : 'none',
-        transition: isRetracted
-          ? 'transform 600ms cubic-bezier(0.34, 1.6, 0.5, 1) 420ms, opacity 250ms ease-out 420ms'
-          : 'transform 220ms ease-in, opacity 160ms ease-in',
+        transition: isDragging
+          ? 'transform 200ms cubic-bezier(0.34, 1.6, 0.5, 1)'
+          : isRetracted
+            ? 'top 160ms ease-out, transform 600ms cubic-bezier(0.34, 1.6, 0.5, 1) 420ms, opacity 250ms ease-out 420ms'
+            : 'top 160ms ease-out, transform 220ms ease-in, opacity 160ms ease-in',
         background: 'rgba(255, 255, 255, 0.06)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
@@ -264,6 +371,27 @@ export default function VerticalCategoryRail({
         }}
       >
         {activeItem.icon}
+      </span>
+
+      {/* While scrubbing: the aisle you are flying over, in a glass pill next to the finger */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute right-full top-1/2 mr-3 flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold text-white"
+        style={{
+          transform: `translateY(-50%) translateX(${isDragging ? 0 : 12}px) scale(${isDragging ? 1 : 0.9})`,
+          opacity: isDragging ? 1 : 0,
+          transition: 'opacity 180ms ease-out, transform 260ms cubic-bezier(0.34, 1.6, 0.5, 1)',
+          background:
+            'linear-gradient(135deg, rgba(255, 75, 130, 0.40) 0%, rgba(18, 18, 24, 0.90) 60%, rgba(255, 75, 130, 0.25) 100%)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255, 150, 190, 0.50)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.5), 0 0 25px rgba(255, 46, 99, 0.35)',
+        }}
+      >
+        <span>{activeItem.icon}</span>
+        <span>{activeItem.name}</span>
+        <span className="rounded-full bg-white/15 px-2 py-0.5 font-mono text-xs">{activeItem.count}</span>
       </span>
     </button>
     <nav
