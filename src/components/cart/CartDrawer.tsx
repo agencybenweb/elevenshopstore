@@ -247,7 +247,7 @@ export default function CartDrawer() {
                 <span>
                   Livraison
                   <span className="block text-[11px] text-white/40">
-                    Roanne, Le Coteau, Riorges · +1,20 €/km au-delà
+                    5 km inclus · +1,20 €/km au-delà
                   </span>
                 </span>
                 {deliveryFeeCents === 0 ? (

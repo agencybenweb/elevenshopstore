@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 9. Calculate Delivery Fee
-    // Frais de base dans la zone Roanne / Le Coteau / Riorges, + €/km au-delà
+    // Distance routière exacte boutique → adresse : frais de base jusqu'à 5 km, + €/km au-delà
     const quote = await computeDeliveryQuote({
       address: input.address,
       postalCode: input.postal_code,

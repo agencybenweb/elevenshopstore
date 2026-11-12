@@ -599,7 +599,7 @@ export default function CheckoutView() {
                   {!isOutOfRange && deliveryQuote && !deliveryQuote.inZone && deliveryQuote.distanceKm != null && (
                     <p className="text-[11px] text-white/50">
                       📍 {String(deliveryQuote.distanceKm).replace('.', ',')} km de la boutique · supplément de 1,20 €/km
-                      au-delà de Roanne, Le Coteau et Riorges, arrondi aux 5 € inférieurs.
+                      au-delà de 5 km, arrondi aux 5 € inférieurs.
                     </p>
                   )}
 

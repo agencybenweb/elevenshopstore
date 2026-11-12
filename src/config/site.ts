@@ -34,7 +34,7 @@ export const siteConfig = {
     zoneCities: ['Roanne', 'Le Coteau', 'Riorges'],
     // Supplément par km hors zone
     perKmCents: 120, // 1,20 €
-    // km de trajet inclus dans le tarif de base (couvre Roanne / Le Coteau / Riorges)
+    // km de route inclus dans le tarif de base (distance exacte boutique -> adresse)
     includedKm: 5,
     // Rayon de livraison max (km de route) pour les communes hors de la liste de l'admin
     maxKm: 30,

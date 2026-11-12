@@ -33,9 +33,10 @@ export default function CGVPage() {
             <ul className="mt-2 list-disc list-inside space-y-1 text-text-muted">
               <li>Minimum de commande obligatoire : 15,00 € TTC (hors frais de livraison).</li>
               <li>
-                Frais de livraison : tarif de base à Roanne, Le Coteau et Riorges, majoré de 1,20 € TTC par
-                kilomètre de trajet routier au-delà de cette zone. Le montant exact est calculé et affiché avant
-                la validation de la commande.
+                Frais de livraison : calculés selon la distance routière exacte entre la boutique et l&apos;adresse
+                de livraison. Tarif de base jusqu&apos;à 5 km, majoré de 1,20 € TTC par kilomètre au-delà, le total
+                étant arrondi aux 5 € inférieurs. Livraison jusqu&apos;à 30 km. Le montant exact est calculé et affiché
+                avant la validation de la commande.
               </li>
               <li>Livraison gratuite : offerte pour toute commande atteignant ou dépassant 30,00 € TTC.</li>
             </ul>
