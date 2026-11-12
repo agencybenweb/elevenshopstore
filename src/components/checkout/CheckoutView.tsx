@@ -397,7 +397,7 @@ export default function CheckoutView() {
                     Frais de livraison
                     {deliveryQuote && (deliveryQuote.extraFeeCents ?? 0) > 0 && deliveryFeeCents > 0 && (
                       <span className="block text-[11px] text-white/40">
-                        {deliveryQuote.extraKm.toString().replace('.', ',')} km hors zone, arrondi aux 5 € inférieurs
+                        estimation, confirmée par message
                       </span>
                     )}
                   </span>
@@ -597,16 +597,10 @@ export default function CheckoutView() {
                       )}
                     </div>
                   )}
-                  {!isOutOfRange && deliveryQuote?.approximate && (
-                    <div className="rounded-2xl border border-secondary/40 bg-secondary/10 px-4 py-3 text-xs text-secondary">
-                      ⚠️ Numéro de rue introuvable : la distance est <strong>estimée</strong>. L&apos;épicerie vous confirmera
-                      le prix exact de la livraison par message.
-                    </div>
-                  )}
                   {!isOutOfRange && deliveryQuote && !deliveryQuote.inZone && deliveryQuote.distanceKm != null && (
                     <p className="text-[11px] text-white/50">
-                      📍 {String(deliveryQuote.distanceKm).replace('.', ',')} km de la boutique · au-delà de 8 km : 10 € + 1,20 €/km,
-                      arrondi aux 5 € inférieurs. Tarif indicatif, ajusté si besoin par message par l&apos;épicerie.
+                      📍 Environ {String(deliveryQuote.distanceKm).replace('.', ',')} km de la boutique · au-delà de 8 km :
+                      10 € + 1,20 €/km. Estimation : les frais de livraison vous seront confirmés par message.
                     </p>
                   )}
 

@@ -35,7 +35,7 @@ export default function CGVPage() {
               <li>
                 Frais de livraison : calculés selon la distance routière exacte entre la boutique et l&apos;adresse
                 de livraison. Tarif de base jusqu&apos;à 8 km ; au-delà, 10 € TTC majorés de 1,20 € TTC par kilomètre
-                au-delà de 8 km, le total étant arrondi aux 5 € inférieurs. Pour les longues distances, ce tarif est
+                au-delà de 8 km. Pour les longues distances, ce tarif est
                 indicatif et peut être ajusté par l&apos;épicerie, qui en informe le client par message avant la livraison. Livraison jusqu&apos;à 30 km. Le montant exact est calculé et affiché
                 avant la validation de la commande.
               </li>
