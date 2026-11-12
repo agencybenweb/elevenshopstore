@@ -230,25 +230,39 @@ export default function CatalogueView({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [categoriesWithProducts, isAisleMode, selectedCategory]);
 
+  // Smooth scroll; the scroll spy stays locked until the scroll really ends so the active chip/rail never flickers
+  const scrollToY = (top: number) => {
+    window.scrollTo({ top, behavior: 'smooth' });
+    const unlock = () => {
+      isProgrammaticScrollRef.current = false;
+      window.removeEventListener('scrollend', unlock);
+    };
+    window.addEventListener('scrollend', unlock, { once: true });
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(unlock, 3000); // fallback for browsers without scrollend
+  };
+
   const handleCategorySelect = (catId: string) => {
     isProgrammaticScrollRef.current = true;
     if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
     scrollTimeoutRef.current = setTimeout(() => {
       isProgrammaticScrollRef.current = false;
-    }, 900);
+    }, 900); // non-scrolling selections (filter mode); scrollToY extends the lock
 
     if (catId === 'all') {
       setSelectedCategory('all');
       setActiveCategory('all');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToY(0);
       return;
     }
 
     if (isAisleMode) {
       const el = document.getElementById(`cat-section-${catId}`);
       if (el) {
-        const topOffset = el.getBoundingClientRect().top + window.scrollY - 110;
-        window.scrollTo({ top: topOffset, behavior: 'smooth' });
+        // mobile: header + sticky category bar sit above the section title
+        const offset = 110;
+        const topOffset = el.getBoundingClientRect().top + window.scrollY - offset;
+        scrollToY(topOffset);
         setActiveCategory(catId);
         return;
       }
@@ -442,16 +456,17 @@ export default function CatalogueView({
         </div>
 
         {/* ── Search & Filter Controls ────────── */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Search bar (shortened on mobile to stop before the vertical filter rail) */}
-          <div className="relative flex-1 max-w-[calc(100%-48px)] sm:max-w-md">
+        <div className="mb-6 flex items-center gap-2 pr-12 sm:pr-0 sm:gap-3 sm:justify-between">
+          {/* Search bar */}
+          <div className="relative flex-1 sm:max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher une boisson, un snack, des bonbons..."
-              className="w-full rounded-full border border-white/10 bg-surface-elevated pl-11 pr-10 py-2.5 text-sm text-white placeholder-white/40 transition-colors focus:border-primary focus:outline-none"
+              placeholder="Rechercher un produit…"
+              enterKeyHint="search"
+              className="w-full rounded-full border border-white/10 bg-surface-elevated pl-11 pr-10 py-3 sm:py-2.5 text-base sm:text-sm text-white placeholder-white/40 transition-colors focus:border-primary focus:outline-none"
             />
             {searchQuery && (
               <button
@@ -464,13 +479,25 @@ export default function CatalogueView({
             )}
           </div>
 
-          {/* Sort selector */}
-          <div className="flex items-center gap-2">
+          {/* Sort selector: round icon button on mobile (native picker), full select on larger screens */}
+          <div className="relative flex shrink-0 items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 text-white/40 hidden sm:block" />
+            <div
+              aria-hidden
+              className={`flex h-12 w-12 items-center justify-center rounded-full border bg-surface-elevated sm:hidden ${
+                sortBy !== 'featured' ? 'border-primary/60 text-primary' : 'border-white/10 text-white/70'
+              }`}
+            >
+              <SlidersHorizontal className="h-5 w-5" />
+              {sortBy !== 'featured' && (
+                <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-primary shadow-glow" />
+              )}
+            </div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="rounded-full border border-white/10 bg-surface-elevated px-4 py-2 text-xs font-medium text-white transition-colors focus:border-primary focus:outline-none"
+              aria-label="Trier les produits"
+              className="absolute inset-0 h-12 w-12 cursor-pointer opacity-0 sm:static sm:h-auto sm:w-auto sm:opacity-100 rounded-full border border-white/10 bg-surface-elevated px-4 py-2 text-xs font-medium text-white transition-colors focus:border-primary focus:outline-none"
             >
               <option value="featured">Populaires en premier</option>
               <option value="price-asc">Prix : croissant</option>
@@ -492,6 +519,18 @@ export default function CatalogueView({
         {/* Main Products Container: full width reaching the natural right boundary of max-w-7xl */}
         <div className="min-w-0">
           {/* Filter mode pill notice */}
+          {searchQuery.trim() && (
+            <div className="mb-4 flex items-center justify-between text-xs text-text-muted">
+              <span>
+                <strong className="text-white">{filteredProducts.length}</strong>{' '}
+                {filteredProducts.length > 1 ? 'résultats' : 'résultat'} pour « {searchQuery.trim()} »
+              </span>
+              <button onClick={() => setSearchQuery('')} className="font-bold text-primary">
+                Effacer
+              </button>
+            </div>
+          )}
+
           {selectedCategory !== 'all' && (
             <div className="mb-6 flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 px-4 py-2.5">
               <div className="flex items-center gap-2 text-xs font-semibold text-white">

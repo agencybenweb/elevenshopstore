@@ -202,7 +202,63 @@ export default function VerticalCategoryRail({
     }, 1500);
   };
 
+  const activeItem = allCategoriesList.find((c) => c.id === activeCategory) || allCategoriesList[0];
+
+  const openFromHandle = () => {
+    if (wakeUpTimerRef.current) {
+      clearTimeout(wakeUpTimerRef.current);
+      wakeUpTimerRef.current = null;
+    }
+    setRetractedState(false);
+    setActiveLabelId(null);
+    if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+    // leave it open a bit longer when the user asked for it explicitly
+    retractTimerRef.current = setTimeout(() => {
+      if (!isHoveredRef.current) {
+        setRetractedState(true);
+        setActiveLabelId(null);
+      }
+    }, 3500);
+  };
+
   return (
+    <>
+    {/* Retracted state on touch screens: a small liquid-glass droplet on the right edge with the current aisle */}
+    <button
+      onClick={openFromHandle}
+      aria-label={`Ouvrir les rayons (rayon actuel : ${activeItem.name})`}
+      className="fixed z-40 flex items-center gap-1 rounded-l-full py-1.5 pl-1.5 pr-2 md:hidden active:scale-95"
+      style={{
+        top: 'calc(50% + 40px)',
+        right: 0,
+        transform: isRetracted ? 'translate3d(0, -50%, 0) scale(1)' : 'translate3d(110%, -50%, 0) scale(0.6)',
+        opacity: isRetracted ? 1 : 0,
+        pointerEvents: isRetracted ? 'auto' : 'none',
+        transition: isRetracted
+          ? 'transform 600ms cubic-bezier(0.34, 1.6, 0.5, 1) 420ms, opacity 250ms ease-out 420ms'
+          : 'transform 220ms ease-in, opacity 160ms ease-in',
+        background: 'rgba(255, 255, 255, 0.06)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        border: '1px solid rgba(255, 255, 255, 0.18)',
+        borderRight: 'none',
+        boxShadow:
+          '0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 0 18px rgba(255, 46, 99, 0.18)',
+      }}
+    >
+      <span className="h-6 w-1 rounded-full bg-white/35" />
+      <span
+        className="flex h-8 w-8 items-center justify-center rounded-full text-sm"
+        style={{
+          background:
+            'radial-gradient(120% 120% at 30% 20%, rgba(255, 80, 140, 0.42) 0%, rgba(255, 46, 99, 0.20) 65%, rgba(255, 255, 255, 0.12) 100%)',
+          border: '1px solid rgba(255, 140, 180, 0.50)',
+          boxShadow: 'inset 0 1.5px 2px rgba(255, 255, 255, 0.6)',
+        }}
+      >
+        {activeItem.icon}
+      </span>
+    </button>
     <nav
       aria-label="Navigation rapide par rayon"
       onMouseEnter={() => {
@@ -228,15 +284,18 @@ export default function VerticalCategoryRail({
       style={{
         top: 'calc(50% + 40px)',
         right: 'max(10px, calc((100vw - 80rem) / 2 - 3.5rem))',
+        // Liquid unroll: the glass tube stretches open vertically with a soft overshoot,
+        // and rolls back up into a droplet that slips off to the right edge.
         transform: isRetracted
-          ? 'translate3d(calc(100% + 60px), -50%, 0)'
-          : 'translate3d(0, -50%, 0)',
+          ? 'translate3d(46px, -50%, 0) scale(0.55, 0.08)'
+          : 'translate3d(0, -50%, 0) scale(1, 1)',
+        transformOrigin: '50% 50%',
         opacity: isRetracted ? 0 : 1,
         pointerEvents: isRetracted ? 'none' : 'auto',
         willChange: 'transform, opacity',
         transition: isRetracted
-          ? 'transform 520ms cubic-bezier(0.32, 0, 0.2, 1), opacity 350ms ease-in 100ms'
-          : 'transform 500ms cubic-bezier(0.16, 1, 0.3, 1), opacity 250ms ease-out',
+          ? 'transform 560ms cubic-bezier(0.55, 0, 0.75, 0.25) 120ms, opacity 260ms ease-in 380ms'
+          : 'transform 720ms cubic-bezier(0.34, 1.45, 0.5, 1), opacity 180ms ease-out',
         background: 'rgba(255, 255, 255, 0.05)',
         backdropFilter: 'blur(28px)',
         WebkitBackdropFilter: 'blur(28px)',
@@ -245,8 +304,9 @@ export default function VerticalCategoryRail({
           '0 12px 36px 0 rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 46, 99, 0.10)',
       }}
     >
-      {allCategoriesList.map((cat) => {
+      {allCategoriesList.map((cat, index) => {
         const isActive = activeCategory === cat.id;
+        const n = allCategoriesList.length;
         // Strictly guarantees that max 1 single label can ever be visible at once
         const isLabelVisible = activeLabelId === cat.id;
 
@@ -254,6 +314,14 @@ export default function VerticalCategoryRail({
           <div
             key={cat.id}
             className="relative flex items-center justify-center"
+            style={{
+              transform: isRetracted ? 'translate3d(14px, 0, 0) scale(0.4)' : 'translate3d(0, 0, 0) scale(1)',
+              opacity: isRetracted ? 0 : 1,
+              filter: isRetracted ? 'blur(3px)' : 'blur(0px)',
+              transition: isRetracted
+                ? `transform 260ms cubic-bezier(0.55, 0, 0.75, 0.25) ${(n - 1 - index) * 22}ms, opacity 200ms ease-in ${(n - 1 - index) * 22}ms, filter 200ms ease-in ${(n - 1 - index) * 22}ms`
+                : `transform 520ms cubic-bezier(0.34, 1.7, 0.5, 1) ${90 + index * 38}ms, opacity 260ms ease-out ${90 + index * 38}ms, filter 300ms ease-out ${90 + index * 38}ms`,
+            }}
             onMouseEnter={() => {
               if (isMouseDevice()) {
                 setActiveLabelId(cat.id);
@@ -300,7 +368,7 @@ export default function VerticalCategoryRail({
             <button
               onClick={() => handleItemClick(cat.id)}
               aria-label={`Rayon ${cat.name}`}
-              className={`relative flex h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 lg:h-11 lg:w-11 items-center justify-center rounded-full text-xs sm:text-sm md:text-lg lg:text-xl transition-all duration-300 active:scale-90 cursor-pointer ${
+              className={`relative flex h-9 w-9 md:h-10 md:w-10 lg:h-11 lg:w-11 items-center justify-center rounded-full text-base md:text-lg lg:text-xl transition-all duration-300 active:scale-90 cursor-pointer ${
                 isActive ? 'scale-110' : 'hover:scale-105'
               }`}
               style={
@@ -346,5 +414,6 @@ export default function VerticalCategoryRail({
         );
       })}
     </nav>
+    </>
   );
 }
