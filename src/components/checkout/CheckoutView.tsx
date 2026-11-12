@@ -28,7 +28,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  LocateFixed,
 } from 'lucide-react';
 
 export default function CheckoutView() {
@@ -92,47 +91,6 @@ export default function CheckoutView() {
     maxKm?: number;
     approximate?: boolean;
   } | null>(null);
-  // Customer's GPS position ("Utiliser ma position"): exact road distance, and a map link for the driver
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
-  const [geoStatus, setGeoStatus] = useState<'idle' | 'locating' | 'ok' | 'denied' | 'error'>('idle');
-  // how the address was filled from the GPS: exact house number, or street only (number to check)
-  const [geoFilled, setGeoFilled] = useState<'exact' | 'street' | null>(null);
-
-  const useMyPosition = () => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setGeoStatus('error');
-      return;
-    }
-    setGeoStatus('locating');
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        setCoords({ lat, lon });
-        setGeoStatus('ok');
-        // fill address, postal code and city from the position (server: BAN -> Nominatim -> Photon)
-        try {
-          const r = await fetch('/api/reverse-geocode', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lat, lon }),
-          });
-          const d = r.ok ? await r.json() : null;
-          if (d?.postalCode) {
-            if (d.address) setAddress(d.address);
-            setPostalCode(d.postalCode);
-            setCity(d.city);
-            setCommuneOptions([d.city]);
-            setGeoFilled(d.precise ? 'exact' : 'street');
-          }
-        } catch {
-          // the position alone is enough for the price
-        }
-      },
-      (err) => setGeoStatus(err.code === err.PERMISSION_DENIED ? 'denied' : 'error'),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
-    );
-  };
   // Communes matching the typed postal code (geo.api.gouv.fr), offered as suggestions for the city field
   const [communeOptions, setCommuneOptions] = useState<string[]>([]);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
@@ -154,7 +112,6 @@ export default function CheckoutView() {
             postal_code: postalCode,
             city,
             subtotal_cents: subtotalCents,
-            ...(coords ? { lat: coords.lat, lon: coords.lon } : {}),
           }),
           signal: controller.signal,
         });
@@ -170,7 +127,7 @@ export default function CheckoutView() {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [address, postalCode, city, subtotalCents, coords]);
+  }, [address, postalCode, city, subtotalCents]);
 
   const deliveryFeeCents =
     totalItems === 0 ? 0 : deliveryQuote ? deliveryQuote.feeCents : cartDeliveryFeeCents;
@@ -182,17 +139,9 @@ export default function CheckoutView() {
 
   // Postal code is free: any commune around Roanne. Typing 5 digits looks up the matching communes
   // (official French API) and fills the city when there is only one.
-  const dropGps = () => {
-    if (!coords) return;
-    setCoords(null);
-    setGeoStatus('idle');
-    setGeoFilled(null);
-  };
-
   const handlePostalCodeChange = (raw: string) => {
     const val = raw.replace(/\D/g, '').slice(0, 5);
     setPostalCode(val);
-    dropGps(); // another postal code = another place than the phone's position
     if (val.length !== 5) {
       setCommuneOptions([]);
       return;
@@ -248,7 +197,6 @@ export default function CheckoutView() {
         address_extra: addressExtra,
         notes,
         payment_method: paymentMethod,
-        ...(coords ? { lat: coords.lat, lon: coords.lon } : {}),
         is_adult_confirmed: isAdultConfirmed,
         honeypot,
         items: items.map((i) => ({
@@ -569,42 +517,6 @@ export default function CheckoutView() {
                   2. ADRESSE DE LIVRAISON (ROANNE & AGGLO)
                 </h3>
                 <div className="space-y-4">
-                  <button
-                    type="button"
-                    onClick={useMyPosition}
-                    disabled={geoStatus === 'locating'}
-                    className={`flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
-                      geoStatus === 'ok'
-                        ? 'border-success/40 bg-success/10 text-success'
-                        : 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/20'
-                    }`}
-                  >
-                    {geoStatus === 'locating' ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <LocateFixed className="h-4 w-4" />
-                    )}
-                    {geoStatus === 'ok'
-                      ? 'Position GPS enregistrée : distance exacte'
-                      : geoStatus === 'locating'
-                        ? 'Localisation en cours…'
-                        : 'Je suis chez moi : utiliser ma position (prix exact)'}
-                  </button>
-                  {geoStatus === 'ok' && geoFilled && (
-                    <p className="-mt-2 text-[11px] text-white/60">
-                      {geoFilled === 'exact'
-                        ? '✅ Adresse remplie depuis ta position. Vérifie-la et ajoute le complément si besoin.'
-                        : '✏️ Rue remplie depuis ta position : vérifie et ajoute ton numéro.'}
-                    </p>
-                  )}
-                  {(geoStatus === 'denied' || geoStatus === 'error') && (
-                    <p className="-mt-2 text-[11px] text-white/50">
-                      {geoStatus === 'denied'
-                        ? 'Position refusée : autorise la localisation pour ce site dans les réglages, ou tape ton adresse.'
-                        : 'Position indisponible : tape ton adresse ci-dessous.'}
-                    </p>
-                  )}
-
                   <div>
                     <label className="block text-xs font-semibold text-white/70 mb-1.5">
                       Adresse complète (Numéro et Rue) *
@@ -661,10 +573,7 @@ export default function CheckoutView() {
                         autoComplete="address-level2"
                         list="eleven-communes"
                         value={city}
-                        onChange={(e) => {
-                          setCity(e.target.value);
-                          dropGps();
-                        }}
+                        onChange={(e) => setCity(e.target.value)}
                         placeholder="Ex: Mably"
                         className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-base sm:text-sm text-white placeholder-white/30 focus:border-primary focus:outline-none"
                       />
@@ -688,16 +597,16 @@ export default function CheckoutView() {
                       )}
                     </div>
                   )}
-                  {!isOutOfRange && deliveryQuote?.approximate && !coords && (
+                  {!isOutOfRange && deliveryQuote?.approximate && (
                     <div className="rounded-2xl border border-secondary/40 bg-secondary/10 px-4 py-3 text-xs text-secondary">
-                      ⚠️ Numéro de rue introuvable : la distance est <strong>estimée</strong> et peut être fausse sur les
-                      grandes routes. Pour le prix exact, appuie sur « utiliser ma position » si tu es chez toi.
+                      ⚠️ Numéro de rue introuvable : la distance est <strong>estimée</strong>. L&apos;épicerie vous confirmera
+                      le prix exact de la livraison par message.
                     </div>
                   )}
                   {!isOutOfRange && deliveryQuote && !deliveryQuote.inZone && deliveryQuote.distanceKm != null && (
                     <p className="text-[11px] text-white/50">
-                      📍 {String(deliveryQuote.distanceKm).replace('.', ',')} km de la boutique · supplément de 1,20 €/km
-                      au-delà de 5 km, arrondi aux 5 € inférieurs.
+                      📍 {String(deliveryQuote.distanceKm).replace('.', ',')} km de la boutique · au-delà de 8 km : 10 € + 1,20 €/km,
+                      arrondi aux 5 € inférieurs. Tarif indicatif, ajusté si besoin par message par l&apos;épicerie.
                     </p>
                   )}
 

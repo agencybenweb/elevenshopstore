@@ -34,8 +34,9 @@ export default function CGVPage() {
               <li>Minimum de commande obligatoire : 15,00 € TTC (hors frais de livraison).</li>
               <li>
                 Frais de livraison : calculés selon la distance routière exacte entre la boutique et l&apos;adresse
-                de livraison. Tarif de base jusqu&apos;à 5 km, majoré de 1,20 € TTC par kilomètre au-delà, le total
-                étant arrondi aux 5 € inférieurs. Livraison jusqu&apos;à 30 km. Le montant exact est calculé et affiché
+                de livraison. Tarif de base jusqu&apos;à 8 km ; au-delà, 10 € TTC majorés de 1,20 € TTC par kilomètre
+                au-delà de 8 km, le total étant arrondi aux 5 € inférieurs. Pour les longues distances, ce tarif est
+                indicatif et peut être ajusté par l&apos;épicerie, qui en informe le client par message avant la livraison. Livraison jusqu&apos;à 30 km. Le montant exact est calculé et affiché
                 avant la validation de la commande.
               </li>
               <li>Livraison gratuite : offerte pour toute commande atteignant ou dépassant 30,00 € TTC.</li>

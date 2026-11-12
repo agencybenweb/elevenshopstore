@@ -4,8 +4,9 @@
  * ══════════════════════════════════════════════
  *
  * Règle (distance routière exacte boutique → adresse du client, pour tout le monde) :
- *  - jusqu'à `includedKm` km        → frais de base (réglage admin, ex. 5 €)
- *  - au-delà                         → + X €/km, total arrondi aux 5 € inférieurs
+ *  - jusqu'à `includedKm` km (8)    → frais de base (réglage admin, ex. 5 €)
+ *  - au-delà                         → 10 € + 1,20 €/km au-delà de 8 km, arrondi aux 5 € inférieurs
+ *                                      (tarif indicatif, ajusté par message par l'épicerie si besoin)
  *  - au-delà de `maxKm` km           → commande refusée
  *  - Panier ≥ seuil "livraison offerte" → 0 €, quelle que soit la distance
  *
@@ -37,7 +38,7 @@ export interface DeliveryQuote {
   maxKm: number;
 }
 
-const { shopLocation, zoneCities, perKmCents, includedKm, maxKm } = siteConfig.deliveryPricing;
+const { shopLocation, zoneCities, perKmCents, includedKm, maxKm, farBaseCents } = siteConfig.deliveryPricing;
 
 const UA = 'ElevenShop-Delivery/1.0';
 const TIMEOUT_MS = 4000;
@@ -230,11 +231,12 @@ export async function computeDeliveryQuote(params: {
   // someone on the edge of Roanne no longer pays like someone in the centre).
   const { distanceKm, approximate } = await resolveDistance(address, postalCode, city, params.coords);
 
-  // first `includedKm` km covered by the base fee, then perKm, rounded DOWN to a multiple of 5 €
-  // in the customer's favour (8,24 € -> 5 €, 21,44 € -> 20 €), never below the base fee
+  // up to `includedKm` (8 km): base fee. Beyond: 10 € + 1,20 €/km above 8 km, rounded DOWN to a
+  // multiple of 5 € (customer's favour); the shop adjusts by message if needed.
   const inZone = distanceKm !== null ? distanceKm <= includedKm : isZoneCity(city);
   const extraKm = distanceKm !== null ? Math.max(0, Math.round((distanceKm - includedKm) * 10) / 10) : 0;
-  const extraFeeCents = Math.max(0, Math.floor((baseFeeCents + extraKm * perKmCents) / 500) * 500 - baseFeeCents);
+  const farFeeCents = Math.floor((farBaseCents + extraKm * perKmCents) / 500) * 500;
+  const extraFeeCents = inZone ? 0 : Math.max(0, Math.max(baseFeeCents, farFeeCents) - baseFeeCents);
   // Beyond the max radius → refused. Address not found: base fee for Roanne / Le Coteau / Riorges or a
   // postal code from the admin list, refused otherwise (a far address must not pass at the base fee).
   const outOfRange =

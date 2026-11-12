@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 9. Calculate Delivery Fee
-    // Distance routière exacte boutique → adresse : frais de base jusqu'à 5 km, + €/km au-delà
+    // Distance routière boutique → adresse : frais de base jusqu'à 8 km, puis 10 € + 1,20 €/km
     const quote = await computeDeliveryQuote({
       address: input.address,
       postalCode: input.postal_code,

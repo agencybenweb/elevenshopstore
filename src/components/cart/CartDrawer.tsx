@@ -250,7 +250,7 @@ export default function CartDrawer() {
                 <span>
                   Livraison
                   <span className="block text-[11px] text-white/40">
-                    5 km inclus · +1,20 €/km au-delà
+                    Jusqu'à 8 km · au-delà dès 10 €
                   </span>
                 </span>
                 {deliveryFeeCents === 0 ? (
