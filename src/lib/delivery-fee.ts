@@ -29,9 +29,13 @@ export interface DeliveryQuote {
   isFree: boolean;
   /** true si la distance n'a pas pu être calculée */
   estimated: boolean;
+  /** true si l'adresse est hors du rayon de livraison (commande refusée) */
+  outOfRange: boolean;
+  /** rayon max en km (pour le message client) */
+  maxKm: number;
 }
 
-const { shopLocation, zoneCities, perKmCents, includedKm } = siteConfig.deliveryPricing;
+const { shopLocation, zoneCities, perKmCents, includedKm, maxKm } = siteConfig.deliveryPricing;
 
 const UA = 'ElevenShop-Delivery/1.0';
 const TIMEOUT_MS = 4000;
@@ -181,8 +185,11 @@ export async function computeDeliveryQuote(params: {
   subtotalCents: number;
   baseFeeCents: number;
   freeDeliveryAboveCents: number;
+  /** codes postaux "connus" de l'admin : jamais refusés, même si la distance n'est pas calculée */
+  allowedPostalCodes?: string[];
 }): Promise<DeliveryQuote> {
   const { address, postalCode, city, subtotalCents, baseFeeCents, freeDeliveryAboveCents } = params;
+  const isKnownPostalCode = (params.allowedPostalCodes ?? []).includes(postalCode.trim());
 
   const isFree = freeDeliveryAboveCents > 0 && subtotalCents >= freeDeliveryAboveCents;
 
@@ -197,6 +204,8 @@ export async function computeDeliveryQuote(params: {
       inZone: true,
       isFree,
       estimated: false,
+      outOfRange: false,
+      maxKm,
     };
   }
 
@@ -206,7 +215,13 @@ export async function computeDeliveryQuote(params: {
   const inZone = isZoneCity(geoCity);
   const extraKm =
     !inZone && distanceKm !== null ? Math.max(0, Math.round((distanceKm - includedKm) * 10) / 10) : 0;
-  const extraFeeCents = Math.round(extraKm * perKmCents);
+  // Always rounded DOWN to a multiple of 5 € in the customer's favour (8,24 € -> 5 €, 21,44 € -> 20 €),
+  // never below the base fee
+  const extraFeeCents = Math.max(0, Math.floor((baseFeeCents + extraKm * perKmCents) / 500) * 500 - baseFeeCents);
+  // Autres communes : acceptées dans le rayon max. Hors liste et adresse introuvable → refus
+  // (sinon une adresse lointaine passerait au tarif de base).
+  const outOfRange =
+    !inZone && (distanceKm !== null ? distanceKm > maxKm : !isKnownPostalCode);
 
   return {
     feeCents: isFree ? 0 : baseFeeCents + extraFeeCents,
@@ -217,5 +232,7 @@ export async function computeDeliveryQuote(params: {
     inZone,
     isFree,
     estimated: distanceKm === null,
+    outOfRange,
+    maxKm,
   };
 }

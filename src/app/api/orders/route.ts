@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { orderFormSchema, isPostalCodeAllowed } from '@/lib/validation';
+import { orderFormSchema } from '@/lib/validation';
 import { getProducts, getStoreSettings, PRODUCT_ID_ALIASES } from '@/lib/products';
 import { sendTelegramOrderNotification } from '@/lib/telegram';
 import { getServiceRoleClient, isSupabaseConfigured } from '@/lib/supabase';
@@ -89,17 +89,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Check postal code
-    if (!isPostalCodeAllowed(input.postal_code, settings.allowed_postal_codes)) {
-      return NextResponse.json(
-        {
-          error: `Désolé, nous ne livrons pas encore le code postal ${input.postal_code}. Zones couvertes : ${settings.allowed_postal_codes.join(
-            ', '
-          )}.`,
-        },
-        { status: 400 }
-      );
-    }
+    // 5. Postal code: any nearby commune is accepted, the delivery quote (step 9) refuses
+    //    addresses beyond the max delivery radius.
 
     // 6. Recalculate ALL prices on the server from database / source of truth
     const allProducts = await getProducts();
@@ -196,7 +187,19 @@ export async function POST(req: NextRequest) {
       subtotalCents,
       baseFeeCents: settings.delivery_fee_cents,
       freeDeliveryAboveCents: settings.free_delivery_above_cents,
+      allowedPostalCodes: settings.allowed_postal_codes,
     });
+    if (quote.outOfRange) {
+      return NextResponse.json(
+        {
+          error:
+            quote.distanceKm !== null
+              ? `Désolé, votre adresse est à ${String(quote.distanceKm).replace('.', ',')} km de la boutique : nous livrons jusqu'à ${quote.maxKm} km autour de Roanne.`
+              : `Nous n'avons pas pu localiser cette adresse. Vérifiez le code postal et la commune, ou appelez-nous pour commander.`,
+        },
+        { status: 400 }
+      );
+    }
     if (quote.estimated) {
       console.warn(`[Orders] Distance non calculée pour ${input.postal_code} ${input.city} — frais de base appliqués.`);
     }

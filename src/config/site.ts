@@ -36,6 +36,8 @@ export const siteConfig = {
     perKmCents: 120, // 1,20 €
     // km de trajet inclus dans le tarif de base (couvre Roanne / Le Coteau / Riorges)
     includedKm: 5,
+    // Rayon de livraison max (km de route) pour les communes hors de la liste de l'admin
+    maxKm: 30,
   },
 
   social: {

@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       subtotalCents,
       baseFeeCents: settings.delivery_fee_cents,
       freeDeliveryAboveCents: settings.free_delivery_above_cents,
+      allowedPostalCodes: settings.allowed_postal_codes,
     });
 
     return NextResponse.json({ quote });

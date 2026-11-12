@@ -82,11 +82,16 @@ export default function CheckoutView() {
   // Frais de livraison calculés selon l'adresse (zone de base + €/km au-delà)
   const [deliveryQuote, setDeliveryQuote] = useState<{
     feeCents: number;
+    extraFeeCents?: number;
     extraKm: number;
     distanceKm: number | null;
     inZone: boolean;
     estimated: boolean;
+    outOfRange?: boolean;
+    maxKm?: number;
   } | null>(null);
+  // Communes matching the typed postal code (geo.api.gouv.fr), offered as suggestions for the city field
+  const [communeOptions, setCommuneOptions] = useState<string[]>([]);
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
 
   useEffect(() => {
@@ -131,14 +136,30 @@ export default function CheckoutView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Auto-fill city on common postal codes
-  const handlePostalCodeChange = (val: string) => {
+  // Postal code is free: any commune around Roanne. Typing 5 digits looks up the matching communes
+  // (official French API) and fills the city when there is only one.
+  const handlePostalCodeChange = (raw: string) => {
+    const val = raw.replace(/\D/g, '').slice(0, 5);
     setPostalCode(val);
-    if (val === '42300') setCity('Roanne');
-    else if (val === '42120') setCity('Le Coteau');
-    else if (val === '42370') setCity('Renaison');
-    else if (val === '42153') setCity('Riorges');
+    if (val.length !== 5) {
+      setCommuneOptions([]);
+      return;
+    }
+    fetch(`https://geo.api.gouv.fr/communes?codePostal=${val}&fields=nom,population&format=json`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list: { nom: string; population?: number }[]) => {
+        // biggest commune first (42190 -> Charlieu, not Chandon)
+        const sorted = [...(list || [])].sort((a, b) => (b.population ?? 0) - (a.population ?? 0));
+        const names = Array.from(new Set(sorted.map((c) => c.nom)));
+        setCommuneOptions(names);
+        if (names.length > 0) {
+          setCity((current) => (names.some((n) => n.toLowerCase() === current.trim().toLowerCase()) ? current : names[0]));
+        }
+      })
+      .catch(() => setCommuneOptions([]));
   };
+
+  const isOutOfRange = Boolean(deliveryQuote?.outOfRange);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -373,9 +394,9 @@ export default function CheckoutView() {
                 <div className="flex justify-between text-text-muted">
                   <span>
                     Frais de livraison
-                    {deliveryQuote && deliveryQuote.extraKm > 0 && deliveryFeeCents > 0 && (
+                    {deliveryQuote && (deliveryQuote.extraFeeCents ?? 0) > 0 && deliveryFeeCents > 0 && (
                       <span className="block text-[11px] text-white/40">
-                        dont {deliveryQuote.extraKm.toString().replace('.', ',')} km hors zone × 1,20 €
+                        {deliveryQuote.extraKm.toString().replace('.', ',')} km hors zone, arrondi aux 5 € inférieurs
                       </span>
                     )}
                   </span>
@@ -514,16 +535,31 @@ export default function CheckoutView() {
                       <label className="block text-xs font-semibold text-white/70 mb-1.5">
                         Code Postal *
                       </label>
-                      <select
+                      <input
+                        type="text"
+                        required
+                        inputMode="numeric"
+                        autoComplete="postal-code"
+                        pattern="[0-9]{5}"
+                        maxLength={5}
+                        list="eleven-postal-codes"
                         value={postalCode}
                         onChange={(e) => handlePostalCodeChange(e.target.value)}
-                        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white focus:border-primary focus:outline-none"
-                      >
-                        <option value="42300">42300 — Roanne / Mably</option>
-                        <option value="42120">42120 — Le Coteau / Commelle-Vernay</option>
-                        <option value="42153">42153 — Riorges</option>
-                        <option value="42370">42370 — Renaison / Saint-Alban</option>
-                      </select>
+                        placeholder="Ex: 42300"
+                        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-base sm:text-sm text-white placeholder-white/30 focus:border-primary focus:outline-none"
+                      />
+                      <datalist id="eleven-postal-codes">
+                        <option value="42300">Roanne / Mably</option>
+                        <option value="42120">Le Coteau / Commelle-Vernay / Perreux</option>
+                        <option value="42153">Riorges</option>
+                        <option value="42370">Renaison / Saint-Alban-les-Eaux</option>
+                        <option value="42640">Saint-Romain-la-Motte</option>
+                        <option value="42155">Villerest / Saint-Jean-Saint-Maurice</option>
+                        <option value="42190">Charlieu</option>
+                        <option value="42720">Pouilly-sous-Charlieu</option>
+                        <option value="42460">Coutouvre / Lay</option>
+                        <option value="42310">La Pacaudière</option>
+                      </datalist>
                     </div>
 
                     <div>
@@ -533,12 +569,39 @@ export default function CheckoutView() {
                       <input
                         type="text"
                         required
+                        autoComplete="address-level2"
+                        list="eleven-communes"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white focus:border-primary focus:outline-none"
+                        placeholder="Ex: Mably"
+                        className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-base sm:text-sm text-white placeholder-white/30 focus:border-primary focus:outline-none"
                       />
+                      <datalist id="eleven-communes">
+                        {communeOptions.map((n) => (
+                          <option key={n} value={n} />
+                        ))}
+                      </datalist>
                     </div>
                   </div>
+
+                  {isOutOfRange && (
+                    <div className="rounded-2xl border border-error/40 bg-error/10 px-4 py-3 text-xs text-error">
+                      {deliveryQuote?.distanceKm != null ? (
+                        <>
+                          Votre adresse est à <strong>{String(deliveryQuote.distanceKm).replace('.', ',')} km</strong> de la
+                          boutique : nous livrons jusqu&apos;à {deliveryQuote.maxKm ?? 30} km autour de Roanne.
+                        </>
+                      ) : (
+                        <>Nous n&apos;arrivons pas à localiser cette adresse. Vérifiez le code postal et la commune.</>
+                      )}
+                    </div>
+                  )}
+                  {!isOutOfRange && deliveryQuote && !deliveryQuote.inZone && deliveryQuote.distanceKm != null && (
+                    <p className="text-[11px] text-white/50">
+                      📍 {String(deliveryQuote.distanceKm).replace('.', ',')} km de la boutique · supplément de 1,20 €/km
+                      au-delà de Roanne, Le Coteau et Riorges, arrondi aux 5 € inférieurs.
+                    </p>
+                  )}
 
                   <div>
                     <label className="block text-xs font-semibold text-white/70 mb-1.5">
@@ -743,9 +806,9 @@ export default function CheckoutView() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={!isMinOrderReached || isSubmitting}
+                  disabled={!isMinOrderReached || isSubmitting || isOutOfRange}
                   className={`btn-pill btn-pill-primary w-full py-4 text-base font-bold shadow-glow flex items-center justify-center gap-2 ${
-                    !isMinOrderReached || isSubmitting
+                    !isMinOrderReached || isSubmitting || isOutOfRange
                       ? 'opacity-40 cursor-not-allowed hover:scale-100 hover:shadow-none'
                       : ''
                   }`}
