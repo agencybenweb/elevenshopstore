@@ -79,7 +79,7 @@ export default function CartDrawer() {
         role="dialog"
         aria-modal="true"
         aria-label="Mon Panier"
-        className="relative z-10 flex h-full w-full max-w-md flex-col bg-[#121212] border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out"
+        className="relative z-10 flex h-full h-[100dvh] w-full max-w-md flex-col bg-[#121212] border-l border-white/10 shadow-2xl transition-transform duration-300 ease-out"
       >
         {/* ── Header ──────────────────────────── */}
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
@@ -99,6 +99,9 @@ export default function CartDrawer() {
           </button>
         </div>
 
+        {/* ── Scrollable body: progress, items, notices and totals scroll together so the
+             items are never squeezed on small phones; only the checkout button stays pinned ── */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain" data-lenis-prevent>
         {/* ── Free delivery progress bar ───────── */}
         {totalItems > 0 && (
           <div className="border-b border-white/5 bg-surface-muted/60 px-5 py-3">
@@ -125,7 +128,7 @@ export default function CartDrawer() {
         )}
 
         {/* ── Cart Items List / Empty State ───── */}
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className={`px-5 py-4 ${items.length === 0 ? 'h-full' : ''}`}>
           {items.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center py-12">
               <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/5 text-white/30">
@@ -214,9 +217,9 @@ export default function CartDrawer() {
           )}
         </div>
 
-        {/* ── Footer / Checkout Section ────────── */}
+        {/* ── Summary (scrolls with the items) ── */}
         {items.length > 0 && (
-          <div className="border-t border-white/10 bg-surface-muted/90 p-5 space-y-3">
+          <div className="border-t border-white/10 bg-surface-muted/60 px-5 py-4 space-y-3">
             {/* 18+ Warning */}
             {hasAlcohol ? (
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs text-amber-200">
@@ -270,7 +273,16 @@ export default function CartDrawer() {
                 Encore <strong>{formatPrice(missingForMinOrderCents)}</strong> pour pouvoir commander.
               </div>
             ) : null}
+          </div>
+        )}
+        </div>
 
+        {/* ── Pinned checkout button ───────────── */}
+        {items.length > 0 && (
+          <div
+            className="border-t border-white/10 bg-[#121212] px-5 pt-3 space-y-2"
+            style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          >
             {/* Checkout Action Button */}
             {isMinOrderReached ? (
               <Link
