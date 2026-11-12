@@ -95,6 +95,8 @@ export default function CheckoutView() {
   // Customer's GPS position ("Utiliser ma position"): exact road distance, and a map link for the driver
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<'idle' | 'locating' | 'ok' | 'denied' | 'error'>('idle');
+  // how the address was filled from the GPS: exact house number, or street only (number to check)
+  const [geoFilled, setGeoFilled] = useState<'exact' | 'street' | null>(null);
 
   const useMyPosition = () => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
@@ -108,15 +110,20 @@ export default function CheckoutView() {
         const lon = pos.coords.longitude;
         setCoords({ lat, lon });
         setGeoStatus('ok');
-        // fill the address fields from the position when they are empty (official reverse geocoding)
+        // fill address, postal code and city from the position (server: BAN -> Nominatim -> Photon)
         try {
-          const r = await fetch(`https://data.geopf.fr/geocodage/reverse?lon=${lon}&lat=${lat}&limit=1`);
+          const r = await fetch('/api/reverse-geocode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat, lon }),
+          });
           const d = r.ok ? await r.json() : null;
-          const pr = d?.features?.[0]?.properties;
-          if (pr) {
-            setAddress((cur) => cur || pr.name || '');
-            if (pr.postcode) setPostalCode((cur) => (cur && cur.length === 5 && cur !== pr.postcode ? cur : pr.postcode));
-            if (pr.city) setCity((cur) => (cur && cur !== 'Roanne' ? cur : pr.city));
+          if (d?.postalCode) {
+            if (d.address) setAddress(d.address);
+            setPostalCode(d.postalCode);
+            setCity(d.city);
+            setCommuneOptions([d.city]);
+            setGeoFilled(d.precise ? 'exact' : 'street');
           }
         } catch {
           // the position alone is enough for the price
@@ -175,9 +182,17 @@ export default function CheckoutView() {
 
   // Postal code is free: any commune around Roanne. Typing 5 digits looks up the matching communes
   // (official French API) and fills the city when there is only one.
+  const dropGps = () => {
+    if (!coords) return;
+    setCoords(null);
+    setGeoStatus('idle');
+    setGeoFilled(null);
+  };
+
   const handlePostalCodeChange = (raw: string) => {
     const val = raw.replace(/\D/g, '').slice(0, 5);
     setPostalCode(val);
+    dropGps(); // another postal code = another place than the phone's position
     if (val.length !== 5) {
       setCommuneOptions([]);
       return;
@@ -575,6 +590,13 @@ export default function CheckoutView() {
                         ? 'Localisation en cours…'
                         : 'Je suis chez moi : utiliser ma position (prix exact)'}
                   </button>
+                  {geoStatus === 'ok' && geoFilled && (
+                    <p className="-mt-2 text-[11px] text-white/60">
+                      {geoFilled === 'exact'
+                        ? '✅ Adresse remplie depuis ta position. Vérifie-la et ajoute le complément si besoin.'
+                        : '✏️ Rue remplie depuis ta position : vérifie et ajoute ton numéro.'}
+                    </p>
+                  )}
                   {(geoStatus === 'denied' || geoStatus === 'error') && (
                     <p className="-mt-2 text-[11px] text-white/50">
                       {geoStatus === 'denied'
@@ -591,13 +613,7 @@ export default function CheckoutView() {
                       type="text"
                       required
                       value={address}
-                      onChange={(e) => {
-                        setAddress(e.target.value);
-                        if (coords) {
-                          setCoords(null);
-                          setGeoStatus('idle');
-                        }
-                      }}
+                      onChange={(e) => setAddress(e.target.value)}
                       placeholder="Ex: 14 rue de la République"
                       className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white placeholder-white/30 focus:border-primary focus:outline-none"
                     />
@@ -645,7 +661,10 @@ export default function CheckoutView() {
                         autoComplete="address-level2"
                         list="eleven-communes"
                         value={city}
-                        onChange={(e) => setCity(e.target.value)}
+                        onChange={(e) => {
+                          setCity(e.target.value);
+                          dropGps();
+                        }}
                         placeholder="Ex: Mably"
                         className="w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-base sm:text-sm text-white placeholder-white/30 focus:border-primary focus:outline-none"
                       />
