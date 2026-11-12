@@ -56,7 +56,7 @@ export const heroSlides: HeroSlide[] = [
       { src: '/hero/drop-1.svg', alt: 'Goutte', depth: 0.5, initialX: '28%', initialY: '18%', size: 36, rotation: 12 },
       { src: '/hero/drop-2.svg', alt: 'Goutte', depth: 0.6, initialX: '72%', initialY: '15%', size: 40, rotation: -15 },
     ],
-    priceCents: 290,
+    priceCents: 300,
     slug: 'monster-ultra-strawberry-dreams',
   },
   {
@@ -79,7 +79,7 @@ export const heroSlides: HeroSlide[] = [
       { src: '/hero/drop-1.svg', alt: 'Goutte', depth: 0.5, initialX: '27%', initialY: '18%', size: 38, rotation: 14 },
       { src: '/hero/drop-2.svg', alt: 'Goutte', depth: 0.6, initialX: '74%', initialY: '16%', size: 42, rotation: -16 },
     ],
-    priceCents: 320,
+    priceCents: 350,
     slug: 'red-bull-ruby-edition-poire-epicee',
   },
   {
