@@ -599,8 +599,8 @@ export default function CheckoutView() {
                   )}
                   {!isOutOfRange && deliveryQuote && !deliveryQuote.inZone && deliveryQuote.distanceKm != null && (
                     <p className="text-[11px] text-white/50">
-                      📍 Environ {String(deliveryQuote.distanceKm).replace('.', ',')} km de la boutique · au-delà de 8 km :
-                      10 € + 1,20 €/km. Estimation : les frais de livraison vous seront confirmés par message.
+                      📍 Au-delà de 8 km : 10 € + 1,20 €/km. Estimation : les frais de livraison vous seront confirmés
+                      par message.
                     </p>
                   )}
 
