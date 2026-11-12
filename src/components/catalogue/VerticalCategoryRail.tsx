@@ -21,6 +21,8 @@ export default function VerticalCategoryRail({
   // Strictly ONE single label can EVER be active at a time (from click or PC hover)
   const [activeLabelId, setActiveLabelId] = useState<string | null>(null);
   const [isRetracted, setIsRetracted] = useState<boolean>(false);
+  // PC: index of the bubble under the cursor, drives the macOS-dock style magnification
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const isRetractedRef = useRef<boolean>(false);
   const retractTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,6 +122,8 @@ export default function VerticalCategoryRail({
     const handleMouseMove = (e: MouseEvent) => {
       if (!isMouseDevice()) return;
       if (isClickActionRef.current) return;
+      // cursor already on the rail: keep the hovered bubble's label (this used to wipe it on every move)
+      if (isHoveredRef.current) return;
 
       const screenRightThreshold = window.innerWidth - 80;
       const containerRightThreshold = (window.innerWidth + Math.min(window.innerWidth, 1280)) / 2 - 30;
@@ -227,7 +231,10 @@ export default function VerticalCategoryRail({
     <button
       onClick={openFromHandle}
       aria-label={`Ouvrir les rayons (rayon actuel : ${activeItem.name})`}
-      className="fixed z-40 flex items-center gap-1 rounded-l-full py-1.5 pl-1.5 pr-2 md:hidden active:scale-95"
+      onMouseEnter={() => {
+        if (isMouseDevice()) openFromHandle();
+      }}
+      className="fixed z-40 flex items-center gap-1 rounded-l-full py-1.5 pl-1.5 pr-2 active:scale-95 cursor-pointer"
       style={{
         top: 'calc(50% + 40px)',
         right: 0,
@@ -274,9 +281,22 @@ export default function VerticalCategoryRail({
         }
       }}
       onMouseLeave={() => {
+        setHoverIndex(null);
         if (isMouseDevice()) {
           isHoveredRef.current = false;
           setActiveLabelId(null);
+          scheduleRetract();
+        }
+      }}
+      onFocus={() => {
+        // keyboard users: tabbing into the rail keeps it unrolled
+        isHoveredRef.current = true;
+        setRetractedState(false);
+        if (retractTimerRef.current) clearTimeout(retractTimerRef.current);
+      }}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          isHoveredRef.current = false;
           scheduleRetract();
         }
       }}
@@ -309,6 +329,10 @@ export default function VerticalCategoryRail({
         const n = allCategoriesList.length;
         // Strictly guarantees that max 1 single label can ever be visible at once
         const isLabelVisible = activeLabelId === cat.id;
+        // dock magnification: hovered bubble 1.28x, neighbours 1.14x / 1.05x, liquid spring
+        const dist = hoverIndex === null ? null : Math.abs(hoverIndex - index);
+        const magnify = dist === null ? 0 : [0.28, 0.14, 0.05][dist] ?? 0;
+        const bubbleScale = (isActive ? 1.1 : 1) + magnify;
 
         return (
           <div
@@ -325,6 +349,7 @@ export default function VerticalCategoryRail({
             onMouseEnter={() => {
               if (isMouseDevice()) {
                 setActiveLabelId(cat.id);
+                setHoverIndex(index);
               }
             }}
             onMouseLeave={() => {
@@ -368,11 +393,11 @@ export default function VerticalCategoryRail({
             <button
               onClick={() => handleItemClick(cat.id)}
               aria-label={`Rayon ${cat.name}`}
-              className={`relative flex h-9 w-9 md:h-10 md:w-10 lg:h-11 lg:w-11 items-center justify-center rounded-full text-base md:text-lg lg:text-xl transition-all duration-300 active:scale-90 cursor-pointer ${
-                isActive ? 'scale-110' : 'hover:scale-105'
-              }`}
-              style={
-                isActive
+              className="relative flex h-9 w-9 md:h-10 md:w-10 lg:h-11 lg:w-11 items-center justify-center rounded-full text-base md:text-lg lg:text-xl active:!scale-90 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+              style={{
+                transform: `scale(${bubbleScale})`,
+                transition: 'transform 320ms cubic-bezier(0.34, 1.6, 0.5, 1), background 300ms, box-shadow 300ms, border-color 300ms',
+                ...(isActive
                   ? {
                       background:
                         'radial-gradient(120% 120% at 30% 20%, rgba(255, 80, 140, 0.42) 0%, rgba(255, 46, 99, 0.20) 65%, rgba(255, 255, 255, 0.12) 100%)',
@@ -383,11 +408,13 @@ export default function VerticalCategoryRail({
                         'inset 0 1.5px 2px rgba(255, 255, 255, 0.60), inset 0 -1px 2px rgba(255, 46, 99, 0.3), 0 4px 18px rgba(255, 46, 99, 0.32)',
                     }
                   : {
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      boxShadow: 'inset 0 1px 0.5px rgba(255, 255, 255, 0.15)',
-                    }
-              }
+                      background: dist === 0 ? 'rgba(255, 255, 255, 0.10)' : 'rgba(255, 255, 255, 0.04)',
+                      border: dist === 0 ? '1px solid rgba(255, 150, 190, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
+                      boxShadow: dist === 0
+                        ? 'inset 0 1px 1px rgba(255, 255, 255, 0.35), 0 4px 14px rgba(255, 46, 99, 0.22)'
+                        : 'inset 0 1px 0.5px rgba(255, 255, 255, 0.15)',
+                    }),
+              }}
             >
               <span
                 className={
