@@ -86,8 +86,8 @@ export default function RootLayout({
               },
               geo: {
                 '@type': 'GeoCoordinates',
-                latitude: 46.03535,
-                longitude: 4.0703,
+                latitude: 46.03464,
+                longitude: 4.06969,
               },
               areaServed: [
                 { '@type': 'City', name: 'Roanne' },

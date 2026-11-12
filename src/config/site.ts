@@ -29,7 +29,7 @@ export const siteConfig = {
   /* Tarification de la livraison à la distance (voir src/lib/delivery-fee.ts) */
   deliveryPricing: {
     // Position GPS de la boutique (21 rue Anatole France)
-    shopLocation: { lat: 46.03535, lon: 4.0703 }, // 21 rue Anatole France, Roanne centre (next to the McDonald's), NOT the Le Coteau street of the same name
+    shopLocation: { lat: 46.03464, lon: 4.06969 }, // 21 rue Anatole France, Roanne centre (exact point given by the owner), NOT the Le Coteau street of the same name
     // Villes livrées au tarif de base (frais "standard" de l'admin)
     zoneCities: ['Roanne', 'Le Coteau', 'Riorges'],
     // Supplément par km hors zone
