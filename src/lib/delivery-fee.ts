@@ -15,7 +15,7 @@
  */
 import { siteConfig } from '@/config/site';
 
-type GeoPoint = { lat: number; lon: number; city?: string; postcode?: string };
+type GeoPoint = { lat: number; lon: number; city?: string; postcode?: string; precise?: boolean };
 
 export interface DeliveryQuote {
   feeCents: number;
@@ -29,6 +29,8 @@ export interface DeliveryQuote {
   isFree: boolean;
   /** true si la distance n'a pas pu être calculée */
   estimated: boolean;
+  /** true si l'adresse n'a été trouvée qu'à la rue / la commune (pas au numéro) : distance approximative */
+  approximate: boolean;
   /** true si l'adresse est hors du rayon de livraison (commande refusée) */
   outOfRange: boolean;
   /** rayon max en km (pour le message client) */
@@ -56,11 +58,11 @@ export function isZoneCity(city: string | undefined | null): boolean {
   return Boolean(city) && ZONE.has(normalizeCity(city as string));
 }
 
-async function fetchJson(url: string): Promise<any | null> {
+async function fetchJson(url: string, timeoutMs = TIMEOUT_MS): Promise<any | null> {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': UA, Accept: 'application/json' },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: 'no-store',
     });
     if (!res.ok) return null;
@@ -81,13 +83,22 @@ async function geocode(address: string, postalCode: string, city: string): Promi
   const plausible = (p: GeoPoint) =>
     (!p.postcode || p.postcode.slice(0, 2) === dept) && haversineKm(shopLocation, p) <= MAX_PLAUSIBLE_KM;
 
-  const ban = await fetchJson(
-    `https://data.geopf.fr/geocodage/search?q=${q}&postcode=${encodeURIComponent(postalCode)}&limit=1`
-  );
+  // BAN (official French address base) is the only free source that knows house numbers:
+  // try its two hosts before falling back to street-level geocoders.
+  const banQuery = `search?q=${q}&postcode=${encodeURIComponent(postalCode)}&limit=1`;
+  const ban =
+    (await fetchJson(`https://data.geopf.fr/geocodage/${banQuery}`, 6000)) ??
+    (await fetchJson(`https://api-adresse.data.gouv.fr/${banQuery}`, 6000));
   const banFeat = ban?.features?.[0];
   if (banFeat?.geometry?.coordinates && (banFeat.properties?.score ?? 0) >= 0.4) {
     const [lon, lat] = banFeat.geometry.coordinates;
-    const p = { lat, lon, city: banFeat.properties?.city, postcode: banFeat.properties?.postcode };
+    const p = {
+      lat,
+      lon,
+      city: banFeat.properties?.city,
+      postcode: banFeat.properties?.postcode,
+      precise: banFeat.properties?.type === 'housenumber',
+    };
     if (plausible(p)) return p;
   }
 
@@ -95,7 +106,13 @@ async function geocode(address: string, postalCode: string, city: string): Promi
   const phFeat = photon?.features?.[0];
   if (phFeat?.geometry?.coordinates && phFeat.properties?.countrycode === 'FR') {
     const [lon, lat] = phFeat.geometry.coordinates;
-    const p = { lat, lon, city: phFeat.properties?.city || phFeat.properties?.name, postcode: phFeat.properties?.postcode };
+    const p = {
+      lat,
+      lon,
+      city: phFeat.properties?.city || phFeat.properties?.name,
+      postcode: phFeat.properties?.postcode,
+      precise: Boolean(phFeat.properties?.housenumber),
+    };
     if (plausible(p)) return p;
   }
 
@@ -110,6 +127,7 @@ async function geocode(address: string, postalCode: string, city: string): Promi
       lon: parseFloat(n.lon),
       city: a.city || a.town || a.village || a.municipality,
       postcode: a.postcode,
+      precise: Boolean(a.house_number),
     };
     if (plausible(p)) return p;
   }
@@ -147,10 +165,21 @@ function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: num
 }
 
 // Petit cache mémoire pour éviter de re-géocoder à chaque frappe / à la validation
-const quoteCache = new Map<string, { at: number; distanceKm: number | null; city?: string }>();
+const quoteCache = new Map<string, { at: number; distanceKm: number | null; city?: string; approximate: boolean }>();
 const CACHE_TTL_MS = 30 * 60 * 1000;
 
-async function resolveDistance(address: string, postalCode: string, city: string) {
+async function resolveDistance(
+  address: string,
+  postalCode: string,
+  city: string,
+  coords?: { lat: number; lon: number } | null
+) {
+  // Customer's GPS position (checkout "Utiliser ma position"): exact, no geocoding needed
+  if (coords && haversineKm(shopLocation, coords) <= MAX_PLAUSIBLE_KM) {
+    const d = (await roadDistanceKm(coords)) ?? haversineKm(shopLocation, coords) * 1.3;
+    return { at: Date.now(), distanceKm: d, city: undefined, approximate: false };
+  }
+
   const key = normalizeCity(`${address}|${postalCode}|${city}`);
   const cached = quoteCache.get(key);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached;
@@ -159,8 +188,10 @@ async function resolveDistance(address: string, postalCode: string, city: string
   let resolvedCity: string | undefined;
 
   // Adresse exacte, sinon centre de la commune
-  const point =
-    (address ? await geocode(address, postalCode, city) : null) ?? (await geocode('', postalCode, city));
+  const exact = address ? await geocode(address, postalCode, city) : null;
+  const point = exact ?? (await geocode('', postalCode, city));
+  // only a house-number match is exact; a street or commune point can be km away on long country roads
+  const approximate = !(exact && exact.precise);
   if (point) {
     resolvedCity = point.city;
     distanceKm = await roadDistanceKm(point);
@@ -169,9 +200,9 @@ async function resolveDistance(address: string, postalCode: string, city: string
     }
   }
 
-  const entry = { at: Date.now(), distanceKm, city: resolvedCity };
-  // On ne met en cache que les résultats aboutis
-  if (distanceKm !== null) {
+  const entry = { at: Date.now(), distanceKm, city: resolvedCity, approximate };
+  // On ne met en cache que les résultats aboutis et précis (une panne de la BAN ne doit pas rester en cache)
+  if (distanceKm !== null && !approximate) {
     if (quoteCache.size > 500) quoteCache.clear();
     quoteCache.set(key, entry);
   }
@@ -187,6 +218,8 @@ export async function computeDeliveryQuote(params: {
   freeDeliveryAboveCents: number;
   /** codes postaux "connus" de l'admin : jamais refusés, même si la distance n'est pas calculée */
   allowedPostalCodes?: string[];
+  /** position GPS du client (bouton "Utiliser ma position") : distance exacte */
+  coords?: { lat: number; lon: number } | null;
 }): Promise<DeliveryQuote> {
   const { address, postalCode, city, subtotalCents, baseFeeCents, freeDeliveryAboveCents } = params;
   const isKnownPostalCode = (params.allowedPostalCodes ?? []).includes(postalCode.trim());
@@ -195,7 +228,7 @@ export async function computeDeliveryQuote(params: {
 
   // Everyone is priced on the exact road distance shop -> address (no flat zone by city:
   // someone on the edge of Roanne no longer pays like someone in the centre).
-  const { distanceKm } = await resolveDistance(address, postalCode, city);
+  const { distanceKm, approximate } = await resolveDistance(address, postalCode, city, params.coords);
 
   // first `includedKm` km covered by the base fee, then perKm, rounded DOWN to a multiple of 5 €
   // in the customer's favour (8,24 € -> 5 €, 21,44 € -> 20 €), never below the base fee
@@ -216,6 +249,7 @@ export async function computeDeliveryQuote(params: {
     inZone,
     isFree,
     estimated: distanceKm === null,
+    approximate: distanceKm !== null && approximate,
     outOfRange,
     maxKm,
   };

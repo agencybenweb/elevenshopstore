@@ -49,6 +49,10 @@ export const orderFormSchema = z.object({
     .optional()
     .default(''),
 
+  // GPS position from the checkout "Utiliser ma position" button (exact delivery distance)
+  lat: z.number().min(-90).max(90).optional(),
+  lon: z.number().min(-180).max(180).optional(),
+
   payment_method: z.enum(['cash', 'card'], {
     message: 'Veuillez choisir un mode de paiement à la livraison.',
   }),

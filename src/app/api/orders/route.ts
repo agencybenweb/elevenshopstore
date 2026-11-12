@@ -188,6 +188,7 @@ export async function POST(req: NextRequest) {
       baseFeeCents: settings.delivery_fee_cents,
       freeDeliveryAboveCents: settings.free_delivery_above_cents,
       allowedPostalCodes: settings.allowed_postal_codes,
+      coords: input.lat !== undefined && input.lon !== undefined ? { lat: input.lat, lon: input.lon } : null,
     });
     if (quote.outOfRange) {
       return NextResponse.json(
@@ -220,7 +221,15 @@ export async function POST(req: NextRequest) {
       postal_code: input.postal_code,
       city: input.city,
       address_extra: input.address_extra || '',
-      notes: input.notes || '',
+      // GPS link for the driver when the customer shared their position
+      notes: [
+        input.notes || '',
+        input.lat !== undefined && input.lon !== undefined
+          ? `📍 Position GPS du client : https://maps.google.com/?q=${input.lat.toFixed(6)},${input.lon.toFixed(6)}`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
       payment_method: input.payment_method,
       subtotal_cents: subtotalCents,
       delivery_fee_cents: deliveryFeeCents,

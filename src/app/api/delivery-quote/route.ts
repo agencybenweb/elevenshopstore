@@ -31,6 +31,10 @@ export async function POST(req: NextRequest) {
     const postalCode = String(body?.postal_code || '').slice(0, 10).trim();
     const city = String(body?.city || '').slice(0, 100).trim();
     const subtotalCents = Math.max(0, Math.round(Number(body?.subtotal_cents) || 0));
+    const lat = Number(body?.lat);
+    const lon = Number(body?.lon);
+    const coords =
+      Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180 ? { lat, lon } : null;
 
     if (!city || !/^\d{5}$/.test(postalCode)) {
       return NextResponse.json({ error: 'Adresse incomplète' }, { status: 400 });
@@ -45,6 +49,7 @@ export async function POST(req: NextRequest) {
       baseFeeCents: settings.delivery_fee_cents,
       freeDeliveryAboveCents: settings.free_delivery_above_cents,
       allowedPostalCodes: settings.allowed_postal_codes,
+      coords,
     });
 
     return NextResponse.json({ quote });
