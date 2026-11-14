@@ -1957,6 +1957,19 @@ export const DEMO_PRODUCTS: Product[] = [
     sort_order: 2,
     is_age_restricted: true,
   },
+  {
+    id: 'alcool-poliakov-flasque-20cl',
+    nom: 'Vodka Poliakov Flasque 20cl (37.5%)',
+    slug: 'vodka-poliakov-flasque-20cl',
+    description: 'Flasque de vodka Poliakov Premium 20cl, triple distillée. Vente interdite aux mineurs.',
+    price_cents: 750,
+    image_url: '/products/poliakov-flasque-20cl.webp',
+    category_id: 'cat-alcool',
+    is_available: true,
+    stock: 20,
+    sort_order: 3,
+    is_age_restricted: true,
+  },
   /* ══════════════════════════════════════════════
      9. TABAC & CIGARETTES (18+)
      ══════════════════════════════════════════════ */
