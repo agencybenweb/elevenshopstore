@@ -5,8 +5,9 @@
  *
  * Règle (distance routière exacte boutique → adresse du client, pour tout le monde) :
  *  - jusqu'à `includedKm` km (8)    → frais de base (réglage admin, ex. 5 €)
- *  - au-delà                         → 10 € + 1,20 €/km au-delà de 8 km, arrondi aux 5 € inférieurs
- *                                      (tarif indicatif, ajusté par message par l'épicerie si besoin)
+ *  - communes à prix fixe (communeFees) → Renaison / St-Romain-la-Motte 10 €, St-André-d'Apchon /
+ *                                      St-Germain-Lespinasse 12 €, St-Forgeux-Lespinasse 15 €
+ *  - au-delà, autres communes        → paliers : ≤ 12 km 10 €, ≤ 15 km 12 €, plus loin 15 € (max)
  *  - au-delà de `maxKm` km           → commande refusée
  *  - Panier ≥ seuil "livraison offerte" → 0 €, quelle que soit la distance
  *
@@ -38,7 +39,7 @@ export interface DeliveryQuote {
   maxKm: number;
 }
 
-const { shopLocation, zoneCities, perKmCents, includedKm, maxKm, farBaseCents } = siteConfig.deliveryPricing;
+const { shopLocation, zoneCities, includedKm, maxKm, communeFees, distanceTiers } = siteConfig.deliveryPricing;
 
 const UA = 'ElevenShop-Delivery/1.0';
 const TIMEOUT_MS = 4000;
@@ -54,6 +55,21 @@ function normalizeCity(city: string): string {
 }
 
 const ZONE = new Set(zoneCities.map(normalizeCity));
+const COMMUNE_FEES = new Map(Object.entries(communeFees).map(([c, fee]) => [normalizeCity(c), fee]));
+
+function communeFeeFor(...cities: (string | undefined | null)[]): number | null {
+  for (const c of cities) {
+    if (!c) continue;
+    const fee = COMMUNE_FEES.get(normalizeCity(c));
+    if (fee !== undefined) return fee;
+  }
+  return null;
+}
+
+function tierFeeFor(distanceKm: number): number {
+  const tier = distanceTiers.find((t) => distanceKm <= t.upToKm) ?? distanceTiers[distanceTiers.length - 1];
+  return tier.feeCents;
+}
 
 export function isZoneCity(city: string | undefined | null): boolean {
   return Boolean(city) && ZONE.has(normalizeCity(city as string));
@@ -229,18 +245,24 @@ export async function computeDeliveryQuote(params: {
 
   // Everyone is priced on the exact road distance shop -> address (no flat zone by city:
   // someone on the edge of Roanne no longer pays like someone in the centre).
-  const { distanceKm, approximate } = await resolveDistance(address, postalCode, city, params.coords);
+  const { distanceKm, approximate, city: geoCity } = await resolveDistance(address, postalCode, city, params.coords);
 
-  // up to `includedKm` (8 km): base fee. Beyond: 10 € + 1,20 €/km above 8 km, rounded DOWN to a
-  // multiple of 5 € (customer's favour); the shop adjusts by message if needed.
-  const inZone = distanceKm !== null ? distanceKm <= includedKm : isZoneCity(city);
+  // Communes à prix fixe (Renaison, St-André-d'Apchon...) : le prix ne dépend pas de l'adresse exacte.
+  // Sinon : frais de base jusqu'à `includedKm` (8 km), puis paliers 10 € / 12 € / 15 € (max).
+  const communeFee = communeFeeFor(city, geoCity);
+  const inZone =
+    communeFee === null && (distanceKm !== null ? distanceKm <= includedKm : isZoneCity(city));
   const extraKm = distanceKm !== null ? Math.max(0, Math.round((distanceKm - includedKm) * 10) / 10) : 0;
-  const farFeeCents = Math.floor((farBaseCents + extraKm * perKmCents) / 500) * 500;
+  const farFeeCents = communeFee ?? (distanceKm !== null ? tierFeeFor(distanceKm) : baseFeeCents);
   const extraFeeCents = inZone ? 0 : Math.max(0, Math.max(baseFeeCents, farFeeCents) - baseFeeCents);
   // Beyond the max radius → refused. Address not found: base fee for Roanne / Le Coteau / Riorges or a
   // postal code from the admin list, refused otherwise (a far address must not pass at the base fee).
   const outOfRange =
-    distanceKm !== null ? distanceKm > maxKm : !(isZoneCity(city) || isKnownPostalCode);
+    communeFee !== null
+      ? false
+      : distanceKm !== null
+      ? distanceKm > maxKm
+      : !(isZoneCity(city) || isKnownPostalCode);
 
   return {
     feeCents: isFree ? 0 : baseFeeCents + extraFeeCents,

@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 9. Calculate Delivery Fee
-    // Distance routière boutique → adresse : frais de base jusqu'à 8 km, puis 10 € + 1,20 €/km
+    // Distance routière boutique → adresse : frais de base jusqu'à 8 km, puis prix par commune / paliers 10-12-15 €
     const quote = await computeDeliveryQuote({
       address: input.address,
       postalCode: input.postal_code,

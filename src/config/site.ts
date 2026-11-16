@@ -32,9 +32,20 @@ export const siteConfig = {
     shopLocation: { lat: 46.03464, lon: 4.06969 }, // 21 rue Anatole France, Roanne centre (exact point given by the owner), NOT the Le Coteau street of the same name
     // Villes livrées au tarif de base (frais "standard" de l'admin)
     zoneCities: ['Roanne', 'Le Coteau', 'Riorges'],
-    // Au-delà de includedKm : forfait "longue distance" + supplément par km
-    farBaseCents: 1000, // 10 €
-    perKmCents: 120, // 1,20 €
+    // Prix fixes par commune (priment sur la distance)
+    communeFees: {
+      'Saint-Romain-la-Motte': 1000, // 10 €
+      Renaison: 1000, // 10 €
+      "Saint-André-d'Apchon": 1200, // 12 €
+      'Saint-Germain-Lespinasse': 1200, // 12 €
+      'Saint-Forgeux-Lespinasse': 1500, // 15 €
+    } as Record<string, number>,
+    // Au-delà de includedKm, autres communes : paliers selon la distance routière (plafond 15 €)
+    distanceTiers: [
+      { upToKm: 12, feeCents: 1000 }, // 8–12 km : 10 €
+      { upToKm: 15, feeCents: 1200 }, // 12–15 km : 12 €
+      { upToKm: 9999, feeCents: 1500 }, // au-delà : 15 € (max)
+    ],
     // km de route couverts par le tarif de base (distance boutique -> adresse)
     includedKm: 8,
     // Rayon de livraison max (km de route) pour les communes hors de la liste de l'admin
