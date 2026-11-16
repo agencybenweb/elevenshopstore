@@ -7,7 +7,8 @@
  *  - jusqu'à `includedKm` km (8)    → frais de base (réglage admin, ex. 5 €)
  *  - communes à prix fixe (communeFees) → Renaison / St-Romain-la-Motte 10 €, St-André-d'Apchon /
  *                                      St-Germain-Lespinasse 12 €, St-Forgeux-Lespinasse 15 €
- *  - au-delà, autres communes        → paliers : ≤ 12 km 10 €, ≤ 15 km 12 €, plus loin 15 € (max)
+ *  - au-delà, autres communes        → paliers : ≤ 12 km 10 €, ≤ 15 km 12 €, ≤ 17 km 15 €,
+ *                                      puis 15 € + 1,20 €/km au-delà de 17 km (arrondi à l'euro)
  *  - au-delà de `maxKm` km           → commande refusée
  *  - Panier ≥ seuil "livraison offerte" → 0 €, quelle que soit la distance
  *
@@ -39,7 +40,8 @@ export interface DeliveryQuote {
   maxKm: number;
 }
 
-const { shopLocation, zoneCities, includedKm, maxKm, communeFees, distanceTiers } = siteConfig.deliveryPricing;
+const { shopLocation, zoneCities, includedKm, maxKm, communeFees, distanceTiers, farPerKmCents } =
+  siteConfig.deliveryPricing;
 
 const UA = 'ElevenShop-Delivery/1.0';
 const TIMEOUT_MS = 4000;
@@ -67,8 +69,11 @@ function communeFeeFor(...cities: (string | undefined | null)[]): number | null 
 }
 
 function tierFeeFor(distanceKm: number): number {
-  const tier = distanceTiers.find((t) => distanceKm <= t.upToKm) ?? distanceTiers[distanceTiers.length - 1];
-  return tier.feeCents;
+  const tier = distanceTiers.find((t) => distanceKm <= t.upToKm);
+  if (tier) return tier.feeCents;
+  // Au-delà du dernier palier : on continue de monter au km, arrondi à l'euro le plus proche
+  const last = distanceTiers[distanceTiers.length - 1];
+  return Math.round((last.feeCents + (distanceKm - last.upToKm) * farPerKmCents) / 100) * 100;
 }
 
 export function isZoneCity(city: string | undefined | null): boolean {

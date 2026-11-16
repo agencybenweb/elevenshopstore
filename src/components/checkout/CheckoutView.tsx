@@ -599,7 +599,7 @@ export default function CheckoutView() {
                   )}
                   {!isOutOfRange && deliveryQuote && !deliveryQuote.inZone && deliveryQuote.distanceKm != null && (
                     <p className="text-[11px] text-white/50">
-                      📍 Au-delà de 8 km : de 10 € à 15 € selon la commune. Estimation : les frais de livraison vous
+                      📍 Au-delà de 8 km : à partir de 10 € selon la commune et la distance. Estimation : les frais de livraison vous
                       seront confirmés par message.
                     </p>
                   )}

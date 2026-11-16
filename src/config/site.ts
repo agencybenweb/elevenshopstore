@@ -40,12 +40,14 @@ export const siteConfig = {
       'Saint-Germain-Lespinasse': 1200, // 12 €
       'Saint-Forgeux-Lespinasse': 1500, // 15 €
     } as Record<string, number>,
-    // Au-delà de includedKm, autres communes : paliers selon la distance routière (plafond 15 €)
+    // Au-delà de includedKm, autres communes : paliers selon la distance routière
     distanceTiers: [
       { upToKm: 12, feeCents: 1000 }, // 8–12 km : 10 €
       { upToKm: 15, feeCents: 1200 }, // 12–15 km : 12 €
-      { upToKm: 9999, feeCents: 1500 }, // au-delà : 15 € (max)
+      { upToKm: 17, feeCents: 1500 }, // 15–17 km : 15 € (≈ Saint-Forgeux-Lespinasse)
     ],
+    // Au-delà du dernier palier : 15 € + 1,20 €/km au-delà de 17 km, arrondi à l'euro (ex. Ambierle ≈ 17 €)
+    farPerKmCents: 120,
     // km de route couverts par le tarif de base (distance boutique -> adresse)
     includedKm: 8,
     // Rayon de livraison max (km de route) pour les communes hors de la liste de l'admin
