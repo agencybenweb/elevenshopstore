@@ -39,6 +39,7 @@ export const siteConfig = {
       "Saint-André-d'Apchon": 1200, // 12 €
       'Saint-Germain-Lespinasse': 1200, // 12 €
       'Saint-Forgeux-Lespinasse': 1500, // 15 €
+      'Saint-Just-en-Chevalet': 2000, // 20 € — commune la plus loin livrée
     } as Record<string, number>,
     // Au-delà de includedKm, autres communes : paliers selon la distance routière
     distanceTiers: [
@@ -48,6 +49,8 @@ export const siteConfig = {
     ],
     // Au-delà du dernier palier : 15 € + 1,20 €/km au-delà de 17 km, arrondi à l'euro (ex. Ambierle ≈ 17 €)
     farPerKmCents: 120,
+    // Plafond des frais affichés en ligne (un éventuel supplément est convenu par téléphone avec le client)
+    maxFeeCents: 2000, // 20 €
     // km de route couverts par le tarif de base (distance boutique -> adresse)
     includedKm: 8,
     // Rayon de livraison max (km de route) pour les communes hors de la liste de l'admin

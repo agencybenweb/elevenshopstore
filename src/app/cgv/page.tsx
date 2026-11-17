@@ -35,8 +35,8 @@ export default function CGVPage() {
               <li>
                 Frais de livraison : calculés selon la distance routière exacte entre la boutique et l&apos;adresse
                 de livraison. Tarif de base jusqu&apos;à 8 km ; au-delà, à partir de 10 € TTC selon la commune et la distance
-                (15 € TTC jusqu&apos;à 17 km, puis 1,20 € TTC par kilomètre supplémentaire). Pour les longues distances, ce tarif est
-                indicatif et peut être ajusté par l&apos;épicerie, qui en informe le client par message avant la livraison. Livraison jusqu&apos;à 30 km. Le montant exact est calculé et affiché
+                (15 € TTC jusqu&apos;à 17 km, puis 1,20 € TTC par kilomètre supplémentaire, 20 € TTC maximum). Pour les longues distances, ce tarif est
+                indicatif et peut être ajusté par l&apos;épicerie, qui en informe le client par téléphone ou par message avant la livraison. Livraison jusqu&apos;à 30 km (Saint-Just-en-Chevalet). Le montant exact est calculé et affiché
                 avant la validation de la commande.
               </li>
               <li>Livraison gratuite : offerte pour toute commande atteignant ou dépassant 30,00 € TTC.</li>
